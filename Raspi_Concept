@@ -1,0 +1,271 @@
+###
+1. Here is what we want to do:
+
+**Project Goal:** Kid-friendly launcher for Raspberry Pi 2 with 7" touchscreen (800x480@60Hz)
+
+**Target Hardware:**
+- Raspberry Pi 2 Model B
+- Official 7" touchscreen (800x480 resolution)
+- Currently running DietPi (OS selection flexible)
+
+**Core Requirements:**
+- Simple icon-based boot menu for kids
+- Launch different "apps" from icons
+- Initial features:
+  1. Icon to launch Chromium in kiosk mode (fullscreen, minimal overhead)
+  2. Icon to launch custom Python application
+- Expandable system for adding more apps/features later
+- Optimized for Pi2's limited resources (900MHz quad-core, 1GB RAM)
+
+**User Experience:**
+- Boot directly into launcher (no desktop environment overhead)
+- Touch-friendly, large icons
+- No complex navigation - single screen with app icons
+- Instant feedback on touch
+- Safe for kids (no system access, can't exit to desktop)
+
+###
+2. Here is how we are going to do it and why:
+
+**Architecture Decision:**
+
+**Option A: Lightweight Python GUI (RECOMMENDED)**
+- Python with PyQt5/PySide2 or Kivy for GUI
+- Direct framebuffer rendering (no X server needed initially)
+- Benefits:
+  - Lower resource usage (critical for Pi2)
+  - Faster boot time
+  - Easier to maintain custom Python app integration
+  - PyQt5 well-supported on Raspberry Pi
+- Tradeoffs: More manual setup, but better performance
+
+**Option B: X11 + Python GUI**
+- Minimal X11 server + Python GUI (PyQt5/Kivy)
+- Benefits:
+  - Easier Chromium integration (needs X11 anyway)
+  - More familiar development environment
+  - Better compatibility
+- Tradeoffs: Higher memory overhead (~100-150MB), slower boot
+
+**Recommended Approach: Hybrid (Option A → B when needed)**
+1. Start with X11 minimal setup (Xorg + Openbox as lightweight WM)
+2. Python launcher runs fullscreen, auto-starts on boot
+3. Launcher spawns apps as needed (Chromium, Python apps)
+4. Return to launcher when apps close
+
+**Technology Stack:**
+- **OS:** DietPi (minimal) or Raspberry Pi OS Lite
+- **Display Server:** X11 (Xorg) - required for Chromium
+- **Window Manager:** Openbox (minimal, ~10MB RAM)
+- **GUI Framework:** Python 3 + PyQt5 (hardware accelerated, touch support)
+- **Launcher:** Custom Python application
+- **i18n:** JSON-based translation system (default: German)
+- **Apps:**
+  - Chromium (kiosk mode: `chromium-browser --kiosk --noerrdialogs --disable-infobars`)
+  - Custom Python apps (share same Python environment)
+
+**Why These Choices:**
+- **PyQt5:** Native performance, excellent touch support, hardware acceleration via OpenGL ES
+- **Openbox:** Lightest full-featured WM (~10MB vs LXDE's ~100MB)
+- **DietPi:** Pre-optimized for Pi, easy software installation
+- **Kiosk mode:** No browser chrome, just content
+- **Python:** Single language for launcher + custom apps = easier maintenance
+
+**Performance Optimizations for Pi2:**
+1. Disable unnecessary services (Bluetooth, WiFi if not needed)
+2. Use GPU acceleration where possible (PyQt5 supports OpenGL ES)
+3. Pre-load Python launcher at boot (faster subsequent launches)
+4. Optimize icon sizes (scale appropriately, use PNG with compression)
+5. Limit animations (simple fade-in/out, no complex transitions)
+6. Set CPU governor to 'performance' during active use
+
+**Boot Sequence:**
+1. DietPi boots
+2. Auto-login configured
+3. .xinitrc or display manager launches X11
+4. Openbox starts (hidden, no desktop)
+5. Python launcher starts fullscreen
+6. User selects app icon → launcher spawns app
+7. App closes → return to launcher
+
+**File Structure:**
+```
+/opt/kidlauncher/          # Main application directory
+├── launcher.py            # Main launcher GUI
+├── config.json            # App definitions (icons, commands)
+├── apps/                  # App-specific code
+│   └── custom_app.py      # Example custom Python app
+├── icons/                 # App icons (PNG, ~128x128)
+│   ├── chromium.png
+├── translations/          # i18n translation files
+│   ├── de.json            # German (default)
+│   ├── en.json            # English
+│   └── ...                # Additional languages
+└── utils/                 # Helper modules
+    ├── process_manager.py # App launching/monitoring
+    ├── config_loader.py   # Config parsing
+    └── i18n.py            # Translation managermonitoring
+    └── config_loader.py   # Config parsing
+```
+
+**Configuration Format (config.json):**
+```json
+{
+  "display": {
+    "fullscreen": true,
+    "resolution": "800x480",
+    "background_color": "#2C3E50"
+  },
+  "apps": [
+    {
+      "id": "chromium_kiosk",
+      "name": "Web Browser",
+      "icon": "icons/chromium.png",
+      "command": "chromium-browser --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble https://www.example.com"
+    },
+    {
+      "id": "custom_python_app",
+      "name": "My Game",
+      "icon": "icons/custom_app.png",
+      "command": "python3 /opt/kidlauncher/apps/custom_app.py"
+    }
+  ]
+}
+```
+
+###
+3. Here is where we are at currently:
+
+**Phase 1: Project Setup & Planning** ✓ (Current)
+- [x] Created project concept document
+- [x] Defined architecture and technology stack
+- [ ] Set up GitHub repository structure
+- [ ] Create AI agent instructions (.github/copilot-instructions.md)
+
+**Phase 2: Development Environment Setup** (Next)
+- [ ] Set up DietPi on Raspberry Pi 2
+- [ ] Install X11, Openbox, Python 3, PyQt5
+- [ ] Configure auto-login and X11 auto-start
+- [ ] Test touch screen functionality
+- [ ] Install Chromium browser
+
+**Phase 3: Core Launcher Development**
+- [ ] Create basic PyQt5 window (fullscreen, touch-enabled)
+- [ ] Implement config.json loader
+- [ ] Create icon grid layout (responsive to 800x480)
+- [ ] Add touch event handlers
+- [ ] Implement process spawning (subprocess management)
+- [ ] Handle app lifecycle (launch, monitor, return to launcher)
+
+**Phase 4: App Integration**
+- [ ] Integrate Chromium kiosk mode
+- [ ] Create example custom Python app
+- [ ] Test app switching and memory management
+- [ ] Implement graceful app termination
+
+**Phase 5: Boot Integration**
+- [ ] Configure systemd service or .xinitrc to auto-start launcher
+- [ ] Disable DietPi desktop/login prompt
+- [ ] Set up auto-restart on crash (watchdog)
+- [ ] Optimize boot time
+
+**Phase 6: Polish & Optimization**
+- [ ] Add visual feedback (touch ripple, loading spinner)
+- [ ] Optimize icon loading (caching)
+- [ ] Performance testing and profiling
+- [ ] Memory usage optimization
+- [ ] Create backup/restore scripts
+
+**Phase 7: Internationalization (i18n)**
+- [ ] Create utils/i18n.py translation manager
+- [ ] Set up translations/ directory structure
+- [ ] Create de.json (German - default language)
+- [ ] Create en.json (English)
+- [ ] Translate all UI strings using t() function
+- [ ] Add language selector to settings
+- [ ] Test language switching without restart
+
+**Phase 8: Expansion Features** (Future)
+- [ ] Add settings icon (parent PIN-protected)
+- [ ] WiFi configuration UI
+- [ ] Screen brightness control
+- [ ] Timer/usage limits
+- [ ] Multiple pages/categories
+- [ ] App usage statistics
+
+**Internationalization Guidelines (CRITICAL - ALWAYS APPLY):**
+
+**Rule 1: NEVER hardcode user-facing strings**
+```python
+# ❌ BAD - Hardcoded string
+button = QPushButton("Settings")
+
+# ✅ GOOD - Translated string
+from utils.i18n import t
+button = QPushButton(t('settings.button'))
+```
+
+**Rule 2: Translation file structure**
+- All translations live in `/translations/` directory
+- Each language gets a JSON file (de.json, en.json, fr.json, etc.)
+- Nested keys using dot notation: `app.title`, `settings.weather.location`
+- Include `_meta` section with language info:
+```json
+{
+  "_meta": {
+    "native_name": "Deutsch",
+    "english_name": "German"
+  },
+  "app": {
+    "title": "Wochen-Kalender"
+  }
+}
+```
+
+**Rule 3: Translation usage patterns**
+```python
+from utils.i18n import t, set_language
+
+# Simple translation
+title = t('app.title')
+
+# With format arguments
+message = t('settings.location.selected', city="Berlin", lat=52.52, lon=13.41)
+# Translation: "Ausgewählt: {city} ({lat:.2f}, {lon:.2f})"
+
+# Change language (updates all t() calls)
+set_language('de')  # German (default)
+set_language('en')  # English
+```
+
+**Rule 4: When adding new UI elements**
+1. Add text to BOTH de.json AND en.json
+2. Use descriptive keys: `view.day.next_button` not `btn1`
+3. Group related translations: `weather.*`, `settings.*`, `navigation.*`
+4. Test with both languages before committing
+
+**Rule 5: Default language is GERMAN (de)**
+- All apps must start with German UI
+- settings.json includes `"language": "de"`
+- English and other languages are optional but recommended
+- Fallback chain: requested language → German → English → key itself
+
+**Rule 6: Settings integration**
+- Every app with settings must include language selector
+- Use QComboBox populated from `get_available_languages()`
+- Save language choice to settings.json
+- Apply language immediately with `set_language()`
+
+**Current Status:**
+- Project initialized
+- Concept and architecture defined
+- i18n system architecture defined
+- Ready to begin development environment setup
+
+**Next Immediate Steps:**
+1. Create .github/copilot-instructions.md for AI agent guidance
+2. Set up basic directory structure
+3. Create translations/de.json and translations/en.json templates
+4. Create utils/i18n.py translation manager
+5. Create initial Python launcher skeleton with i18n
+6. Begin DietPi configuration documentation

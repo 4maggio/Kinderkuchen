@@ -1,0 +1,185 @@
+{
+    "_meta": {
+        "native_name": "Deutsch",
+        "english_name": "German"
+    },
+    "app": {
+        "title": "Wochen-Kalender"
+    },
+    "navigation": {
+        "back": "◀ Zurück",
+        "day": "Tag",
+        "week": "Woche",
+        "month": "Monat",
+        "year": "Jahr"
+    },
+    "day_view": {
+        "title": "Tagesansicht",
+        "no_events": "Keine Termine heute",
+        "previous_day": "Vorheriger Tag",
+        "next_day": "Nächster Tag"
+    },
+    "week_view": {
+        "title": "Wochenansicht",
+        "week_of": "Woche vom",
+        "monday": "Mo",
+        "tuesday": "Di",
+        "wednesday": "Mi",
+        "thursday": "Do",
+        "friday": "Fr",
+        "saturday": "Sa",
+        "sunday": "So",
+        "previous_week": "Vorherige Woche",
+        "next_week": "Nächste Woche"
+    },
+    "month_view": {
+        "title": "Monatsansicht",
+        "previous_month": "Vorheriger Monat",
+        "next_month": "Nächster Monat"
+    },
+    "year_view": {
+        "title": "Jahresansicht",
+        "previous_year": "Vorheriges Jahr",
+        "next_year": "Nächstes Jahr",
+        "january": "Januar",
+        "february": "Februar",
+        "march": "März",
+        "april": "April",
+        "may": "Mai",
+        "june": "Juni",
+        "july": "Juli",
+        "august": "August",
+        "september": "September",
+        "oktober": "Oktober",
+        "november": "November",
+        "december": "Dezember"
+    },
+    "categories": {
+        "school": "Schule",
+        "sports": "Sport",
+        "music": "Musik",
+        "appointments": "Termine",
+        "birthday": "Geburtstag",
+        "holiday": "Feiertag",
+        "vacation": "Urlaub",
+        "home": "Zuhause",
+        "other": "Sonstiges"
+    },
+    "weather": {
+        "clear": "Klar",
+        "partly_cloudy": "Teilweise bewölkt",
+        "cloudy": "Bewölkt",
+        "foggy": "Neblig",
+        "drizzle": "Nieselregen",
+        "rainy": "Regnerisch",
+        "snowy": "Schnee",
+        "stormy": "Gewitter",
+        "high": "Max",
+        "low": "Min"
+    },
+    "settings": {
+        "title": "Eltern-Einstellungen",
+        "save_close": "Speichern & Schließen",
+        "cancel": "Abbrechen",
+        "pin_dialog": {
+            "title": "PIN eingeben",
+            "prompt": "Eltern-PIN eingeben:",
+            "ok": "OK",
+            "cancel": "Abbrechen",
+            "incorrect": "Falsche PIN",
+            "incorrect_msg": "Die eingegebene PIN ist falsch."
+        },
+        "tabs": {
+            "weather": "🌤 Wetter",
+            "display": "🖥 Anzeige",
+            "sync": "🔄 Sync",
+            "security": "🔒 Sicherheit"
+        },
+        "weather_tab": {
+            "location_group": "Wetter-Standort",
+            "location_mode": "Standort-Modus:",
+            "location_mode_auto": "Automatisch (IP-basiert)",
+            "location_mode_manual": "Manuell",
+            "city_name": "Stadt:",
+            "city_placeholder": "Zum Suchen tippen...",
+            "detect_location": "🌍 Standort jetzt ermitteln",
+            "current_location": "Aktuell: Nicht gesetzt",
+            "selected_location": "Ausgewählt: {location} ({lat:.2f}, {lon:.2f})",
+            "searching": "🔍 Suche...",
+            "no_results": "Keine Orte gefunden",
+            "detect_success": "Standort erkannt",
+            "detect_success_msg": "Standort gesetzt auf: {city}",
+            "detect_failed": "Erkennung fehlgeschlagen",
+            "detect_failed_msg": "Standort konnte nicht über IP-Adresse ermittelt werden."
+        },
+        "display_tab": {
+            "language_group": "Sprache & Format",
+            "language": "Sprache:",
+            "time_format": "Zeitformat:",
+            "time_format_24h": "24-Stunden (z.B. 14:30)",
+            "time_format_12h": "12-Stunden (z.B. 2:30 PM)",
+            "temperature_group": "Temperatur-Einheit",
+            "temperature_unit": "Einheit:",
+            "temperature_celsius": "Celsius (°C)",
+            "temperature_fahrenheit": "Fahrenheit (°F)",
+            "units_group": "Maßeinheiten",
+            "unit_system": "System:",
+            "unit_system_metric": "Metrisch (km, kg)",
+            "unit_system_imperial": "Imperial (mi, lb)",
+            "year_view_group": "Jahresansicht",
+            "year_start_mode": "Startmonat:",
+            "year_start_current": "Aktueller Monat",
+            "year_start_january": "Januar",
+            "year_start_custom": "Benutzerdefiniert",
+            "custom_month": "Benutzerdefinierter Monat:"
+        },
+        "sync_tab": {
+            "webcal_group": "WebCal Synchronisation",
+            "enable_sync": "WebCal-Synchronisation aktivieren",
+            "webcal_url": "WebCal URL:",
+            "webcal_placeholder": "https://calendar.example.com/cal.ics",
+            "sync_interval": "Sync-Intervall (Minuten):",
+            "note": "Hinweis: Sync-Funktion noch nicht implementiert"
+        },
+        "security_tab": {
+            "pin_group": "PIN-Schutz",
+            "pin_enabled": "PIN-Schutz für Einstellungen aktivieren",
+            "pin_code": "PIN-Code:",
+            "pin_placeholder": "4-6 Ziffern",
+            "pin_warning": "⚠ Merken Sie sich Ihre PIN! Standard ist 1234"
+        }
+    },
+    "common": {
+        "ok": "OK",
+        "cancel": "Abbrechen",
+        "save": "Speichern",
+        "close": "Schließen",
+        "delete": "Löschen",
+        "edit": "Bearbeiten",
+        "add": "Hinzufügen",
+        "search": "Suchen",
+        "loading": "Lädt..."
+    },
+    "screentime": {
+        "group": "Bildschirmzeit",
+        "enabled": "Bildschirmzeit-Limit aktivieren",
+        "limit_minutes": "Zeitlimit (Minuten):",
+        "reminders": "Erinnerungen (Minuten vor Ablauf):",
+        "add_reminder": "Erinnerung hinzufügen",
+        "reminder_title": "⏰ Erinnerung: Zeit läuft ab!",
+        "reminder_message": "Noch {minutes} Minuten Bildschirmzeit übrig.",
+        "locked_title": "🔒 Bildschirmzeit abgelaufen",
+        "locked_message": "Die Bildschirmzeit ist abgelaufen. Bitte Eltern-PIN eingeben, um fortzufahren.",
+        "unlock_button": "Entsperren",
+        "remaining_label": "Verbleibende Zeit: {time}",
+        "quick_actions_title": "⏱️ Bildschirmzeit-Verwaltung",
+        "add_5_min": "+ 5 Minuten",
+        "add_15_min": "+ 15 Minuten",
+        "add_30_min": "+ 30 Minuten",
+        "credit_tomorrow": "Für morgen gutschreiben",
+        "remaining_to_tomorrow": "Rest für morgen",
+        "double_tomorrow": "Doppelt für morgen",
+        "cancel_timer": "Timer abbrechen",
+        "minutes_suffix": " Min."
+    }
+}

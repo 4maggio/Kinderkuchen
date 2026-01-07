@@ -1,0 +1,185 @@
+{
+    "_meta": {
+        "native_name": "English",
+        "english_name": "English"
+    },
+    "app": {
+        "title": "Week Calendar"
+    },
+    "navigation": {
+        "back": "◀ Back",
+        "day": "Day",
+        "week": "Week",
+        "month": "Month",
+        "year": "Year"
+    },
+    "day_view": {
+        "title": "Day View",
+        "no_events": "No events today",
+        "previous_day": "Previous Day",
+        "next_day": "Next Day"
+    },
+    "week_view": {
+        "title": "Week View",
+        "week_of": "Week of",
+        "monday": "Mon",
+        "tuesday": "Tue",
+        "wednesday": "Wed",
+        "thursday": "Thu",
+        "friday": "Fri",
+        "saturday": "Sat",
+        "sunday": "Sun",
+        "previous_week": "Previous Week",
+        "next_week": "Next Week"
+    },
+    "month_view": {
+        "title": "Month View",
+        "previous_month": "Previous Month",
+        "next_month": "Next Month"
+    },
+    "year_view": {
+        "title": "Year View",
+        "previous_year": "Previous Year",
+        "next_year": "Next Year",
+        "january": "January",
+        "february": "February",
+        "march": "March",
+        "april": "April",
+        "may": "May",
+        "june": "June",
+        "july": "July",
+        "august": "August",
+        "september": "September",
+        "october": "October",
+        "november": "November",
+        "december": "December"
+    },
+    "categories": {
+        "school": "School",
+        "sports": "Sports",
+        "music": "Music",
+        "appointments": "Appointments",
+        "birthday": "Birthday",
+        "holiday": "Holiday",
+        "vacation": "Vacation",
+        "home": "Home",
+        "other": "Other"
+    },
+    "weather": {
+        "clear": "Clear",
+        "partly_cloudy": "Partly Cloudy",
+        "cloudy": "Cloudy",
+        "foggy": "Foggy",
+        "drizzle": "Drizzle",
+        "rainy": "Rainy",
+        "snowy": "Snowy",
+        "stormy": "Stormy",
+        "high": "High",
+        "low": "Low"
+    },
+    "settings": {
+        "title": "Parental Settings",
+        "save_close": "Save & Close",
+        "cancel": "Cancel",
+        "pin_dialog": {
+            "title": "Enter PIN",
+            "prompt": "Enter parental PIN:",
+            "ok": "OK",
+            "cancel": "Cancel",
+            "incorrect": "Incorrect PIN",
+            "incorrect_msg": "The PIN you entered is incorrect."
+        },
+        "tabs": {
+            "weather": "🌤 Weather",
+            "display": "🖥 Display",
+            "sync": "🔄 Sync",
+            "security": "🔒 Security"
+        },
+        "weather_tab": {
+            "location_group": "Weather Location",
+            "location_mode": "Location Mode:",
+            "location_mode_auto": "Automatic (IP-based)",
+            "location_mode_manual": "Manual",
+            "city_name": "City Name:",
+            "city_placeholder": "Type to search for a city...",
+            "detect_location": "🌍 Detect Location Now",
+            "current_location": "Current: Not set",
+            "selected_location": "Selected: {location} ({lat:.2f}, {lon:.2f})",
+            "searching": "🔍 Searching...",
+            "no_results": "No locations found",
+            "detect_success": "Location Detected",
+            "detect_success_msg": "Location set to: {city}",
+            "detect_failed": "Detection Failed",
+            "detect_failed_msg": "Could not detect location from IP address."
+        },
+        "display_tab": {
+            "language_group": "Language & Format",
+            "language": "Language:",
+            "time_format": "Time Format:",
+            "time_format_24h": "24-Hour (e.g. 14:30)",
+            "time_format_12h": "12-Hour (e.g. 2:30 PM)",
+            "temperature_group": "Temperature Unit",
+            "temperature_unit": "Unit:",
+            "temperature_celsius": "Celsius (°C)",
+            "temperature_fahrenheit": "Fahrenheit (°F)",
+            "units_group": "Measurement Units",
+            "unit_system": "System:",
+            "unit_system_metric": "Metric (km, kg)",
+            "unit_system_imperial": "Imperial (mi, lb)",
+            "year_view_group": "Year View",
+            "year_start_mode": "Start Month:",
+            "year_start_current": "Current Month",
+            "year_start_january": "January",
+            "year_start_custom": "Custom Month",
+            "custom_month": "Custom Month:"
+        },
+        "sync_tab": {
+            "webcal_group": "WebCal Synchronization",
+            "enable_sync": "Enable WebCal sync",
+            "webcal_url": "WebCal URL:",
+            "webcal_placeholder": "https://calendar.example.com/cal.ics",
+            "sync_interval": "Sync Interval (minutes):",
+            "note": "Note: Sync functionality not yet implemented"
+        },
+        "security_tab": {
+            "pin_group": "PIN Protection",
+            "pin_enabled": "Enable PIN protection for settings",
+            "pin_code": "PIN Code:",
+            "pin_placeholder": "4-6 digits",
+            "pin_warning": "⚠ Remember your PIN! Default is 1234"
+        }
+    },
+    "common": {
+        "ok": "OK",
+        "cancel": "Cancel",
+        "save": "Save",
+        "close": "Close",
+        "delete": "Delete",
+        "edit": "Edit",
+        "add": "Add",
+        "search": "Search",
+        "loading": "Loading..."
+    },
+    "screentime": {
+        "group": "Screen Time",
+        "enabled": "Enable screen time limit",
+        "limit_minutes": "Time limit (minutes):",
+        "reminders": "Reminders (minutes before end):",
+        "add_reminder": "Add reminder",
+        "reminder_title": "⏰ Reminder: Time Running Out!",
+        "reminder_message": "{minutes} minutes of screen time remaining.",
+        "locked_title": "🔒 Screen Time Expired",
+        "locked_message": "Screen time has expired. Please enter parent PIN to continue.",
+        "unlock_button": "Unlock",
+        "remaining_label": "Remaining Time: {time}",
+        "quick_actions_title": "⏱️ Screen Time Management",
+        "add_5_min": "+ 5 Minutes",
+        "add_15_min": "+ 15 Minutes",
+        "add_30_min": "+ 30 Minutes",
+        "credit_tomorrow": "Credit for Tomorrow",
+        "remaining_to_tomorrow": "Remaining to Tomorrow",
+        "double_tomorrow": "Double for Tomorrow",
+        "cancel_timer": "Cancel Timer",
+        "minutes_suffix": " min"
+    }
+}
