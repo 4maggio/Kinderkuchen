@@ -187,6 +187,10 @@ class SettingsDialog(QWidget):
                 "enabled": False,
                 "password": "",
                 "view_only_password": ""
+            },
+            "onscreen_keyboard": {
+                "enabled": True,
+                "auto_show": False
             }
         }
     
@@ -913,6 +917,44 @@ class SettingsDialog(QWidget):
         
         self._on_vnc_enabled_changed(self.vnc_enabled.isChecked())
         
+        # On-Screen Keyboard Group
+        keyboard_group = QGroupBox("⌨️ Bildschirm-Tastatur")
+        keyboard_form = QFormLayout()
+        
+        self.keyboard_enabled = QCheckBox("Bildschirm-Tastatur aktivieren")
+        self.keyboard_enabled.setChecked(self.settings.get("onscreen_keyboard", {}).get("enabled", True))
+        self.keyboard_enabled.toggled.connect(self._on_keyboard_enabled_changed)
+        keyboard_form.addRow("", self.keyboard_enabled)
+        
+        self.keyboard_auto_show = QCheckBox("Automatisch bei Texteingabe anzeigen")
+        self.keyboard_auto_show.setChecked(self.settings.get("onscreen_keyboard", {}).get("auto_show", False))
+        keyboard_form.addRow("", self.keyboard_auto_show)
+        
+        keyboard_info = QLabel(
+            "ℹ️ Verwendet matchbox-keyboard. Die Tastatur kann manuell mit dem Befehl 'matchbox-keyboard' gestartet werden."
+        )
+        keyboard_info.setWordWrap(True)
+        keyboard_info.setStyleSheet(f"color: {self.theme_colors.text_secondary}; font-size: 11px;")
+        keyboard_form.addRow("", keyboard_info)
+        
+        # Keyboard Control Buttons
+        keyboard_buttons = QHBoxLayout()
+        
+        self.keyboard_show_btn = QPushButton("⌨️ Tastatur anzeigen")
+        self.keyboard_show_btn.clicked.connect(self._show_keyboard)
+        keyboard_buttons.addWidget(self.keyboard_show_btn)
+        
+        self.keyboard_hide_btn = QPushButton("✖️ Tastatur verstecken")
+        self.keyboard_hide_btn.clicked.connect(self._hide_keyboard)
+        keyboard_buttons.addWidget(self.keyboard_hide_btn)
+        
+        keyboard_form.addRow("", keyboard_buttons)
+        
+        keyboard_group.setLayout(keyboard_form)
+        layout.addWidget(keyboard_group)
+        
+        self._on_keyboard_enabled_changed(self.keyboard_enabled.isChecked())
+        
         layout.addStretch()
         return widget
     
@@ -998,6 +1040,53 @@ class SettingsDialog(QWidget):
             )
         except Exception as e:
             QMessageBox.warning(self, "VNC", f"Fehler: {str(e)}")
+    
+    def _on_keyboard_enabled_changed(self, enabled: bool):
+        """Enable/disable keyboard controls based on checkbox state."""
+        self.keyboard_auto_show.setEnabled(enabled)
+        self.keyboard_show_btn.setEnabled(enabled)
+        self.keyboard_hide_btn.setEnabled(enabled)
+    
+    def _show_keyboard(self):
+        """Show on-screen keyboard."""
+        import subprocess
+        
+        try:
+            # Launch matchbox-keyboard in background
+            subprocess.Popen(
+                ["matchbox-keyboard"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            QMessageBox.information(self, "Tastatur", "Bildschirm-Tastatur wurde gestartet.")
+        except FileNotFoundError:
+            QMessageBox.warning(
+                self, "Tastatur",
+                "matchbox-keyboard ist nicht installiert.\n\n"
+                "Installation: sudo apt-get install matchbox-keyboard"
+            )
+        except Exception as e:
+            QMessageBox.warning(
+                self, "Tastatur",
+                f"Fehler beim Starten der Tastatur:\n{str(e)}"
+            )
+    
+    def _hide_keyboard(self):
+        """Hide on-screen keyboard."""
+        import subprocess
+        
+        try:
+            # Kill matchbox-keyboard process
+            subprocess.run(
+                ["pkill", "-f", "matchbox-keyboard"],
+                timeout=5
+            )
+            QMessageBox.information(self, "Tastatur", "Bildschirm-Tastatur wurde versteckt.")
+        except Exception as e:
+            QMessageBox.warning(
+                self, "Tastatur",
+                f"Fehler:\n{str(e)}"
+            )
 
     def _create_about_tab(self) -> QWidget:
         """Create the about/settings credits tab."""
@@ -1516,6 +1605,12 @@ class SettingsDialog(QWidget):
         self.settings["vnc"]["enabled"] = self.vnc_enabled.isChecked()
         self.settings["vnc"]["password"] = self.vnc_password.text()
         self.settings["vnc"]["view_only_password"] = self.vnc_view_only_password.text()
+        
+        # Update On-Screen Keyboard settings
+        if "onscreen_keyboard" not in self.settings:
+            self.settings["onscreen_keyboard"] = {}
+        self.settings["onscreen_keyboard"]["enabled"] = self.keyboard_enabled.isChecked()
+        self.settings["onscreen_keyboard"]["auto_show"] = self.keyboard_auto_show.isChecked()
         
         # Update screentime settings
         if "screentime" not in self.settings:

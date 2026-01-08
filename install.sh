@@ -106,19 +106,18 @@ install_x11() {
     print_header "X11 und Openbox Installation"
     
     echo "Chromium benötigt X11. Wir installieren eine minimale X11-Umgebung."
-    echo "Geschätzter Speicherbedarf: ~100MB"
+    echo "Geschätzter Speicherbedarf: ~80MB"
     
     if ! ask_yes_no "X11 und Openbox installieren?" "y"; then
         print_warning "X11 übersprungen - Chromium wird nicht funktionieren!"
         return
     fi
     
-    # Minimal X11 packages
+    # Minimal X11 packages (absolute minimum)
     apt-get install -y \
         xserver-xorg-core \
         xserver-xorg-video-fbdev \
         xinit \
-        x11-xserver-utils \
         openbox \
         unclutter
     
@@ -132,12 +131,11 @@ install_x11() {
 install_python() {
     print_header "Python 3 Installation"
     
-    # Install Python 3 and venv
+    # Install Python 3 and venv (minimal)
     apt-get install -y \
         python3 \
         python3-venv \
-        python3-dev \
-        python3-pip
+        python3-dev
     
     # Git is optional - only install if user wants updates via git
     if ask_yes_no "Git installieren? (für Updates via git pull)" "n"; then
@@ -154,13 +152,12 @@ install_pyqt5() {
     print_header "PyQt5 Installation"
     
     echo "PyQt5 kann entweder als System-Paket oder via pip installiert werden."
-    echo "System-Paket: Schneller, aber älter (~30MB)"
-    echo "pip: Aktueller, aber größer und langsamer (~80MB)"
+    echo "System-Paket: Schneller, kleiner (~25MB)"
+    echo "pip: Aktueller, aber größer (~80MB)"
     
     if ask_yes_no "System-Paket verwenden? (empfohlen)" "y"; then
-        apt-get install -y \
-            python3-pyqt5 \
-            python3-pyqt5.qtwidgets
+        # Only install base PyQt5 package (includes QtWidgets)
+        apt-get install -y python3-pyqt5
         
         print_success "PyQt5 als System-Paket installiert"
         return 0
@@ -214,6 +211,26 @@ install_vnc() {
         echo "Für Raspberry Pi OS kann RealVNC manuell installiert werden:"
         echo "https://www.realvnc.com/download/file/vnc.files/VNC-Server-7.x.x-Linux-ARM.deb"
     fi
+}
+
+###############################################################################
+# Install On-Screen Keyboard
+###############################################################################
+
+install_onscreen_keyboard() {
+    print_header "On-Screen Keyboard Installation"
+    
+    echo "Touchscreen-Tastatur für Texteingabe ohne physische Tastatur."
+    echo "Geschätzter Speicherbedarf: ~5MB"
+    
+    if ! ask_yes_no "On-Screen Keyboard (matchbox-keyboard) installieren?" "y"; then
+        print_warning "On-Screen Keyboard übersprungen"
+        return
+    fi
+    
+    apt-get install -y matchbox-keyboard
+    
+    print_success "On-Screen Keyboard installiert"
 }
 
 ###############################################################################
@@ -501,7 +518,11 @@ EOF
     echo "Dieses Skript installiert alle Abhängigkeiten und konfiguriert"
     echo "das System für automatischen Start beim Booten."
     echo ""
-    echo "Geschätzter Speicherbedarf: ~400MB"
+    echo "Speicherbedarf:"
+    echo "  - Minimal (ohne Chromium/VNC): ~120MB"
+    echo "  - Empfohlen (mit Chromium/VNC/Keyboard): ~580MB"
+    echo "  - Jedes Paket kann einzeln aktiviert/deaktiviert werden"
+    echo ""
     echo "Geschätzte Installationszeit: 10-30 Minuten"
     echo ""
     
@@ -519,6 +540,7 @@ EOF
     local pyqt_system=$?
     install_chromium
     install_vnc
+    install_onscreen_keyboard
     setup_project
     setup_venv
     configure_display

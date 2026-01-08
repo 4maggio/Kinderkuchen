@@ -29,7 +29,7 @@ sudo apt-get install 7zip
 
 # Download und Entpacken:
 wget https://github.com/4maggio/Kinderkuchen/archive/refs/heads/main.zip
-7zz x main.zip
+7z x main.zip
 cd Kinderkuchen-main
 ```
 
@@ -42,7 +42,7 @@ sudo apt-get install 7zip
 
 # Download und Entpacken:
 curl -L https://github.com/4maggio/Kinderkuchen/archive/refs/heads/main.zip -o kinderkuchen.zip
-7zz x kinderkuchen.zip
+7z x kinderkuchen.zip
 cd Kinderkuchen-main
 ```
 

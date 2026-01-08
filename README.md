@@ -20,7 +20,7 @@ sudo apt-get install 7zip
 
 # Download und Entpacken:
 wget https://github.com/4maggio/Kinderkuchen/archive/refs/heads/main.zip
-7zz x main.zip
+7z x main.zip
 cd Kinderkuchen-main
 sudo bash install.sh
 ```
@@ -28,9 +28,14 @@ sudo bash install.sh
 Das interaktive Installations-Skript richtet automatisch ein:
 - ✅ Python 3 + Virtual Environment
 - ✅ Minimales X11 und Openbox
-- ✅ PyQt5, Chromium, RealVNC (optional)
+- ✅ PyQt5 (System-Paket, ~25MB)
+- ❓ Chromium (~200MB, empfohlen für Web-Apps)
+- ❓ RealVNC (~20MB, optional für Fernzugriff)
+- ❓ On-Screen Keyboard (~5MB, optional für Touch-Eingabe)
 - ✅ Auto-Boot beim Systemstart
 - ✅ Display-Konfiguration für 7" Touchscreen
+
+**Speicherbedarf:** Minimal ~120MB, Empfohlen ~580MB (alle Features)
 
 **Detaillierte Anleitung:** Siehe [INSTALL.md](INSTALL.md)
 
