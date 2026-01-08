@@ -5,7 +5,7 @@ Shows weather, three main activity icons, and detailed text entries.
 """
 
 from datetime import date, timedelta
-from typing import List, Dict
+from typing import List, Dict, Optional
 import json
 from pathlib import Path
 
@@ -17,6 +17,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QFont, QPixmap, QPalette, QColor
 
 from utils.i18n import t
+from themes.theme_manager import Theme, ThemeColors
 
 
 class DayView(QWidget):
@@ -33,32 +34,15 @@ class DayView(QWidget):
         
         self.database = database
         self.current_date = current_date or date.today()
+        self.theme_colors = ThemeColors()
+        self.icon_font_size = 72
         
         self._init_ui()
         self.refresh()
     
     def _init_ui(self):
         """Initialize the user interface."""
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #2C3E50;
-                color: white;
-            }
-            QLabel {
-                color: white;
-            }
-            QPushButton {
-                background-color: #34495E;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 10px;
-                font-size: 14px;
-            }
-            QPushButton:pressed {
-                background-color: #1ABC9C;
-            }
-        """)
+        self.setObjectName("DayView")
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -87,8 +71,7 @@ class DayView(QWidget):
         # Weather section
         self.weather_label = QLabel("☀ 72°F - Clear")
         self.weather_label.setAlignment(Qt.AlignCenter)
-        self.weather_label.setFont(QFont("Arial", 16))
-        self.weather_label.setStyleSheet("background-color: #34495E; padding: 10px; border-radius: 8px;")
+        self.weather_label.setFont(QFont("Arial", max(14, int(self.icon_font_size * 0.45))))
         layout.addWidget(self.weather_label)
         
         # Three icon slots
@@ -109,22 +92,17 @@ class DayView(QWidget):
         layout.addWidget(details_label)
         
         # Scrollable text area for detailed entries
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setStyleSheet("""
-            QScrollArea {
-                border: none;
-                background-color: #34495E;
-                border-radius: 8px;
-            }
-        """)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
         
         self.details_widget = QWidget()
         self.details_layout = QVBoxLayout(self.details_widget)
         self.details_layout.setAlignment(Qt.AlignTop)
         
-        scroll_area.setWidget(self.details_widget)
-        layout.addWidget(scroll_area, 1)
+        self.scroll_area.setWidget(self.details_widget)
+        layout.addWidget(self.scroll_area, 1)
+        
+        self._apply_theme_styles()
     
     def _create_icon_slot(self, index: int) -> QWidget:
         """Create an icon slot widget.
@@ -136,13 +114,6 @@ class DayView(QWidget):
             Icon slot widget
         """
         container = QFrame()
-        container.setStyleSheet("""
-            QFrame {
-                background-color: #34495E;
-                border-radius: 10px;
-                padding: 10px;
-            }
-        """)
         container.setFixedSize(220, 200)
         
         layout = QVBoxLayout(container)
@@ -151,7 +122,7 @@ class DayView(QWidget):
         # Icon placeholder (will be populated with actual icons)
         icon_label = QLabel("📅")
         icon_label.setAlignment(Qt.AlignCenter)
-        icon_label.setFont(QFont("Arial", 72))
+        icon_label.setFont(QFont("Arial", self.icon_font_size))
         icon_label.setObjectName(f"icon_{index}")
         layout.addWidget(icon_label)
         
@@ -169,7 +140,67 @@ class DayView(QWidget):
         time_label.setObjectName(f"time_{index}")
         layout.addWidget(time_label)
         
+        self._style_icon_slot(container)
         return container
+
+    def apply_theme(self, theme: Optional[Theme]):
+        """Apply updated theme colors to the view."""
+        self.theme_colors = theme.colors if theme else ThemeColors()
+        # Update fonts from theme
+        if theme and hasattr(theme, 'font'):
+            self.date_label.setFont(QFont(theme.font.family, theme.font.size_xlarge, QFont.Bold))
+        self._apply_theme_styles()
+
+    def _apply_theme_styles(self):
+        """Update all styles to match the active theme colors."""
+        c = self.theme_colors
+        self.setStyleSheet(f"""
+            QWidget#DayView {{
+                background-color: {c.background};
+                color: {c.text_primary};
+            }}
+            QWidget#DayView QLabel {{
+                color: {c.text_primary};
+            }}
+        """)
+        self.weather_label.setStyleSheet(
+            f"background-color: {c.background_secondary}; padding: 10px; border-radius: 8px;"
+        )
+        self.scroll_area.setStyleSheet(
+            f"QScrollArea {{ border: none; background-color: {c.background_secondary}; border-radius: 8px; }}"
+        )
+        for icon_slot in getattr(self, 'icon_widgets', []):
+            self._style_icon_slot(icon_slot)
+
+    def _style_icon_slot(self, container: QFrame):
+        """Apply themed styling to an icon slot container."""
+        c = self.theme_colors
+        container.setStyleSheet(
+            f"QFrame {{ background-color: {c.background_secondary}; border-radius: 10px; padding: 10px; }}"
+        )
+
+    def set_calendar_icon_size(self, size: int):
+        """Adjust icon and weather label sizes based on appearance settings."""
+        try:
+            sanitized = int(size)
+        except (TypeError, ValueError):
+            sanitized = self.icon_font_size
+        sanitized = max(24, min(96, sanitized))
+        self.icon_font_size = sanitized
+        for index, container in enumerate(getattr(self, 'icon_widgets', [])):
+            icon_label = container.findChild(QLabel, f"icon_{index}")
+            if icon_label:
+                font = icon_label.font()
+                font.setPointSize(sanitized)
+                icon_label.setFont(font)
+        if hasattr(self, 'weather_label'):
+            weather_font = self.weather_label.font()
+            weather_font.setPointSize(max(14, int(self.icon_font_size * 0.45)))
+            self.weather_label.setFont(weather_font)
+    
+    def set_icon_size(self, size: int):
+        """Legacy method - delegates to set_calendar_icon_size for compatibility."""
+        self.set_calendar_icon_size(size)
     
     def set_date(self, target_date: date):
         """Set the date to display.

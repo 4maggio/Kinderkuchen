@@ -5,7 +5,7 @@ Shows birthdays, holidays, and vacations in a year overview.
 """
 
 from datetime import date
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
@@ -15,6 +15,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
 
 from utils.i18n import t
+from themes.theme_manager import Theme, ThemeColors
 
 
 class YearView(QWidget):
@@ -33,31 +34,14 @@ class YearView(QWidget):
         
         self.database = database
         self.current_date = current_date or date.today()
+        self.theme_colors = ThemeColors()
         
         self._init_ui()
         self.refresh()
     
     def _init_ui(self):
         """Initialize the user interface."""
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #2C3E50;
-                color: white;
-            }
-            QLabel {
-                color: white;
-            }
-            QPushButton {
-                background-color: #34495E;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 5px;
-            }
-            QPushButton:pressed {
-                background-color: #1ABC9C;
-            }
-        """)
+        self.setObjectName("YearView")
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -100,6 +84,7 @@ class YearView(QWidget):
             self.month_widgets.append(month_widget)
         
         layout.addLayout(self.grid, 1)
+        self._apply_theme_styles()
     
     def _create_month_box(self, month_num: int, month_name: str) -> QWidget:
         """Create a month box widget.
@@ -112,13 +97,6 @@ class YearView(QWidget):
             Month box widget
         """
         container = QFrame()
-        container.setStyleSheet("""
-            QFrame {
-                background-color: #34495E;
-                border-radius: 8px;
-                padding: 8px;
-            }
-        """)
         container.setCursor(Qt.PointingHandCursor)
         container.setObjectName(f"month_{month_num}")
         container.mousePressEvent = lambda event, m=month_num: self._on_month_clicked(m)
@@ -145,11 +123,65 @@ class YearView(QWidget):
         count_label = QLabel()
         count_label.setAlignment(Qt.AlignCenter)
         count_label.setFont(QFont("Arial", 9))
-        count_label.setStyleSheet("color: #95A5A6;")
         count_label.setObjectName(f"count_{month_num}")
         layout.addWidget(count_label)
         
+        self._style_month_box(container)
         return container
+
+    def apply_theme(self, theme: Optional[Theme]):
+        """Apply theme colors to the year view."""
+        self.theme_colors = theme.colors if theme else ThemeColors()
+        # Update fonts from theme
+        if theme and hasattr(theme, 'font'):
+            self.year_label.setFont(QFont(theme.font.family, theme.font.size_heading, QFont.Bold))
+        self._apply_theme_styles()
+
+    def _apply_theme_styles(self):
+        """Refresh widget styles after theme change."""
+        c = self.theme_colors
+        self.setStyleSheet(f"""
+            QWidget#YearView {{
+                background-color: {c.background};
+                color: {c.text_primary};
+            }}
+            QWidget#YearView QLabel {{
+                color: {c.text_primary};
+            }}
+            QWidget#YearView QPushButton {{
+                background-color: {c.background_secondary};
+                color: {c.text_primary};
+                border: none;
+                border-radius: 5px;
+                padding: 5px;
+            }}
+            QWidget#YearView QPushButton:pressed {{
+                background-color: {c.accent};
+            }}
+        """)
+        for widget in self.month_widgets:
+            self._style_month_box(widget)
+
+    def _style_month_box(self, container: QFrame, highlight: bool = False):
+        """Apply themed styling to a month container."""
+        c = self.theme_colors
+        if highlight:
+            container.setStyleSheet(
+                f"QFrame {{ background-color: {c.accent}; border-radius: 8px; padding: 8px; border: 2px solid {c.accent_hover}; }}"
+            )
+        else:
+            container.setStyleSheet(
+                f"QFrame {{ background-color: {c.background_secondary}; border-radius: 8px; padding: 8px; }}"
+            )
+        count_label = container.findChild(QLabel, container.objectName().replace("month", "count"))
+        if count_label:
+            count_label.setStyleSheet(f"color: {c.text_secondary};")
+    
+    def set_calendar_icon_size(self, size: int):
+        """Adjust icon size for calendar display."""
+        # YearView uses minimal icons for special events
+        # This method is added for future flexibility
+        pass
     
     def refresh(self):
         """Refresh the view with current year's data."""
@@ -209,23 +241,7 @@ class YearView(QWidget):
         
         # Highlight current month
         is_current_month = (month_num == date.today().month and year == date.today().year)
-        if is_current_month:
-            container.setStyleSheet("""
-                QFrame {
-                    background-color: #1ABC9C;
-                    border-radius: 8px;
-                    padding: 8px;
-                    border: 2px solid #16A085;
-                }
-            """)
-        else:
-            container.setStyleSheet("""
-                QFrame {
-                    background-color: #34495E;
-                    border-radius: 8px;
-                    padding: 8px;
-                }
-            """)
+        self._style_month_box(container, is_current_month)
         
         # Get special events for this month
         special_events = self.database.get_special_events_by_month(year, month_num)

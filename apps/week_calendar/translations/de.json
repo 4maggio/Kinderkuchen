@@ -92,8 +92,10 @@
         "tabs": {
             "weather": "🌤 Wetter",
             "display": "🖥 Anzeige",
+            "apps": "Apps",
             "sync": "🔄 Sync",
-            "security": "🔒 Sicherheit"
+            "security": "🔒 Sicherheit",
+            "about": "ℹ️ Über"
         },
         "weather_tab": {
             "location_group": "Wetter-Standort",
@@ -133,6 +135,46 @@
             "year_start_custom": "Benutzerdefiniert",
             "custom_month": "Benutzerdefinierter Monat:"
         },
+        "appearance_tab": {
+            "title": "Aussehen",
+            "font_group": "Schrift",
+            "font_size": "Schriftgröße:",
+            "font_family": "Schriftart:",
+            "icon_size": "Icon-Größe:",
+            "font_scale_small": "Kleinere Fonts anpassen:",
+            "font_scale_large": "Größere Fonts anpassen:",
+            "theme_group": "Theme",
+            "theme": "Theme:",
+            "live_preview": "Live-Vorschau aktivieren",
+            "live_preview_hint": "Wendet Theme- und Schriftänderungen sofort an."
+        },
+        "apps_tab": {
+            "grid_group": "Launcher-Raster",
+            "rows": "Zeilen:",
+            "columns": "Spalten:",
+            "apps_group": "App-Kacheln",
+            "apps_hint": "Lege fest, welche Verknüpfungen im Kinder-Launcher erscheinen und wie groß das Raster ist.",
+            "add": "App hinzufügen",
+            "edit": "Bearbeiten",
+            "remove": "Entfernen",
+            "empty": "Noch keine Apps konfiguriert.",
+            "unnamed": "Unbenannte App",
+            "name": "Anzeigename:",
+            "name_placeholder": "z.B. Märchen-Leser",
+            "type": "App-Typ:",
+            "python_path": "Python-Skript:",
+            "website_url": "Website-URL:",
+            "dialog_title_new": "App hinzufügen",
+            "dialog_title_edit": "App bearbeiten",
+            "choose_python": "Python-Skript wählen",
+            "validation_name": "Bitte einen Anzeigenamen eingeben.",
+            "validation_python": "Bitte ein Python-Skript auswählen.",
+            "validation_website": "Bitte eine Website-URL eingeben.",
+            "types": {
+                "python": "Lokale Python-App",
+                "website": "Website in Chromium"
+            }
+        },
         "sync_tab": {
             "webcal_group": "WebCal Synchronisation",
             "enable_sync": "WebCal-Synchronisation aktivieren",
@@ -147,6 +189,15 @@
             "pin_code": "PIN-Code:",
             "pin_placeholder": "4-6 Ziffern",
             "pin_warning": "⚠ Merken Sie sich Ihre PIN! Standard ist 1234"
+        },
+        "about_tab": {
+            "project_group": "Projekt",
+            "project_description": "Der RaspiGui Kid Launcher bietet eine kinderfreundliche Touch-Oberfläche für den Raspberry Pi und ist komplett Open Source.",
+            "repo_label": "Repository:",
+            "credits_group": "Credits & Danke",
+            "credits_weather": "Wetterdaten: {provider}",
+            "credits_art": "Artwork erstellt von {artist}.",
+            "license_note": "Lizenz: MIT (siehe LICENSE)."
         }
     },
     "common": {
@@ -158,7 +209,9 @@
         "edit": "Bearbeiten",
         "add": "Hinzufügen",
         "search": "Suchen",
-        "loading": "Lädt..."
+        "loading": "Lädt...",
+        "browse": "Durchsuchen...",
+        "error": "Fehler"
     },
     "screentime": {
         "group": "Bildschirmzeit",

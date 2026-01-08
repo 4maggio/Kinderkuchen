@@ -19,12 +19,13 @@ from PyQt5.QtGui import QFont, QPainter, QPen, QColor, QPolygon
 
 from utils.i18n import t
 from utils.screentime_manager import ScreenTimeController
+from themes.theme_manager import Theme, ThemeColors
 
 
 class AnalogClockWidget(QWidget):
     """Analog clock showing remaining time."""
     
-    def __init__(self, remaining_seconds: int = 0, parent=None):
+    def __init__(self, remaining_seconds: int = 0, parent=None, theme_colors: Optional[ThemeColors] = None):
         """Initialize analog clock.
         
         Args:
@@ -35,6 +36,7 @@ class AnalogClockWidget(QWidget):
         self.remaining_seconds = remaining_seconds
         self.total_seconds = remaining_seconds if remaining_seconds > 0 else 3600
         self.setMinimumSize(300, 300)
+        self.theme_colors = theme_colors or ThemeColors()
     
     def set_remaining(self, seconds: int, total_seconds: int = None):
         """Update remaining time.
@@ -64,19 +66,22 @@ class AnalogClockWidget(QWidget):
         radius = size // 2 - 20
         
         # Draw clock circle
-        painter.setPen(QPen(QColor(52, 73, 94), 3))
+        border_color = QColor(self.theme_colors.border)
+        painter.setPen(QPen(border_color, 3))
         painter.drawEllipse(center_x - radius, center_y - radius, radius * 2, radius * 2)
         
         # Draw filled arc showing remaining time
         progress = (self.remaining_seconds / self.total_seconds) if self.total_seconds > 0 else 0
         span_angle = int(360 * 16 * progress)  # Qt uses 16ths of a degree
         
-        painter.setBrush(QColor(26, 188, 156, 100))
+        accent = QColor(self.theme_colors.accent)
+        accent.setAlpha(120)
+        painter.setBrush(accent)
         painter.setPen(Qt.NoPen)
         painter.drawPie(center_x - radius, center_y - radius, radius * 2, radius * 2, 90 * 16, -span_angle)
         
         # Draw hour markers
-        painter.setPen(QPen(QColor(255, 255, 255), 2))
+        painter.setPen(QPen(QColor(self.theme_colors.text_primary), 2))
         for i in range(12):
             angle = i * 30  # 30 degrees per hour
             outer_x = center_x + int(radius * 0.9 * self._cos(angle))
@@ -94,11 +99,11 @@ class AnalogClockWidget(QWidget):
         hand_length = radius * 0.7
         hand_x = center_x + int(hand_length * self._cos(minute_angle - 90))
         hand_y = center_y - int(hand_length * self._sin(minute_angle - 90))
-        painter.setPen(QPen(QColor(231, 76, 60), 4))
+        painter.setPen(QPen(QColor(self.theme_colors.error), 4))
         painter.drawLine(center_x, center_y, hand_x, hand_y)
         
         # Center dot
-        painter.setBrush(QColor(231, 76, 60))
+        painter.setBrush(QColor(self.theme_colors.error))
         painter.drawEllipse(center_x - 5, center_y - 5, 10, 10)
         
         # Draw time text
@@ -106,7 +111,7 @@ class AnalogClockWidget(QWidget):
         seconds_left = self.remaining_seconds % 60
         time_text = f"{minutes_left:02d}:{seconds_left:02d}"
         
-        painter.setPen(QColor(255, 255, 255))
+        painter.setPen(QColor(self.theme_colors.text_primary))
         painter.setFont(QFont("Arial", 24, QFont.Bold))
         text_rect = QRect(0, center_y + radius - 50, width, 40)
         painter.drawText(text_rect, Qt.AlignCenter, time_text)
@@ -125,14 +130,8 @@ class AnalogClockWidget(QWidget):
 class ReminderDialog(QDialog):
     """Full-screen reminder dialog with analog clock."""
     
-    def __init__(self, remaining_minutes: int, total_minutes: int, parent=None):
-        """Initialize reminder dialog.
-        
-        Args:
-            remaining_minutes: Minutes remaining
-            total_minutes: Total screen time minutes
-            parent: Parent widget
-        """
+    def __init__(self, remaining_minutes: int, total_minutes: int, parent=None, theme: Optional[Theme] = None):
+        """Initialize reminder dialog."""
         super().__init__(parent)
         
         self.setWindowTitle(t('screentime.reminder_title'))
@@ -143,29 +142,31 @@ class ReminderDialog(QDialog):
         if parent:
             self.setGeometry(parent.geometry())
         
+        self.theme_colors = theme.colors if theme else ThemeColors()
         self._init_ui(remaining_minutes, total_minutes)
     
     def _init_ui(self, remaining_minutes: int, total_minutes: int):
         """Initialize UI."""
-        self.setStyleSheet("""
-            QDialog {
-                background-color: rgba(44, 62, 80, 250);
-            }
-            QLabel {
-                color: white;
-            }
-            QPushButton {
-                background-color: #1ABC9C;
-                color: white;
+        c = self.theme_colors
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {c.background};
+            }}
+            QLabel {{
+                color: {c.text_primary};
+            }}
+            QPushButton {{
+                background-color: {c.accent};
+                color: {c.text_primary};
                 border: none;
                 border-radius: 10px;
                 padding: 20px 40px;
                 font-size: 18px;
                 font-weight: bold;
-            }
-            QPushButton:pressed {
-                background-color: #16A085;
-            }
+            }}
+            QPushButton:pressed {{
+                background-color: {c.accent_hover};
+            }}
         """)
         
         layout = QVBoxLayout(self)
@@ -186,7 +187,7 @@ class ReminderDialog(QDialog):
         layout.addWidget(message)
         
         # Analog clock
-        self.clock = AnalogClockWidget(remaining_minutes * 60)
+        self.clock = AnalogClockWidget(remaining_minutes * 60, theme_colors=self.theme_colors)
         self.clock.setFixedSize(400, 400)
         layout.addWidget(self.clock, 0, Qt.AlignCenter)
         
@@ -200,7 +201,7 @@ class ReminderDialog(QDialog):
 class LockDialog(QDialog):
     """Full-screen lock dialog requiring PIN to unlock."""
     
-    def __init__(self, pin_code: str, parent=None):
+    def __init__(self, pin_code: str, parent=None, theme: Optional[Theme] = None):
         """Initialize lock dialog.
         
         Args:
@@ -218,37 +219,40 @@ class LockDialog(QDialog):
         if parent:
             self.setGeometry(parent.geometry())
         
+        self.theme_colors = theme.colors if theme else ThemeColors()
+        
         self._init_ui()
     
     def _init_ui(self):
         """Initialize UI."""
-        self.setStyleSheet("""
-            QDialog {
-                background-color: rgba(231, 76, 60, 250);
-            }
-            QLabel {
-                color: white;
-            }
-            QLineEdit {
-                background-color: white;
-                color: black;
-                border: none;
+        c = self.theme_colors
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {c.background};
+            }}
+            QLabel {{
+                color: {c.text_primary};
+            }}
+            QLineEdit {{
+                background-color: {c.background_secondary};
+                color: {c.text_primary};
+                border: 1px solid {c.border};
                 border-radius: 10px;
                 padding: 15px;
                 font-size: 24px;
-            }
-            QPushButton {
-                background-color: #C0392B;
-                color: white;
+            }}
+            QPushButton {{
+                background-color: {c.accent};
+                color: {c.text_primary};
                 border: none;
                 border-radius: 10px;
                 padding: 15px 30px;
                 font-size: 16px;
                 font-weight: bold;
-            }
-            QPushButton:pressed {
-                background-color: #922B21;
-            }
+            }}
+            QPushButton:pressed {{
+                background-color: {c.accent_hover};
+            }}
         """)
         
         layout = QVBoxLayout(self)
@@ -285,7 +289,7 @@ class LockDialog(QDialog):
         
         # Error label
         self.error_label = QLabel("")
-        self.error_label.setStyleSheet("color: #FFEB3B; font-weight: bold;")
+        self.error_label.setStyleSheet(f"color: {c.warning}; font-weight: bold;")
         self.error_label.setFont(QFont("Arial", 14))
         self.error_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.error_label)
@@ -334,11 +338,17 @@ class ScreenTimeManager(QWidget):
         self.elapsed_seconds = 0
         self.is_paused = False
         self.is_locked = False
+        self.theme: Optional[Theme] = None
         
         self.load_settings()
     
+    def set_theme(self, theme: Optional[Theme]):
+        """Update theme used for all dialogs."""
+        self.theme = theme
+    
     def load_settings(self):
         """Load screentime settings from JSON."""
+
         try:
             with open(self.settings_path) as f:
                 settings = json.load(f)
@@ -445,7 +455,7 @@ class ScreenTimeManager(QWidget):
         """
         self.pause()
         
-        dialog = ReminderDialog(remaining_minutes, self.limit_minutes, self.parent_widget)
+        dialog = ReminderDialog(remaining_minutes, self.limit_minutes, self.parent_widget, theme=self.theme)
         dialog.exec_()
         
         self.resume()
@@ -456,7 +466,7 @@ class ScreenTimeManager(QWidget):
         self.is_locked = True
         
         # Show lock dialog
-        dialog = LockDialog(self.pin_code, self.parent_widget)
+        dialog = LockDialog(self.pin_code, self.parent_widget, theme=self.theme)
         
         if dialog.exec_() == QDialog.Accepted:
             # PIN correct - unlock and reset

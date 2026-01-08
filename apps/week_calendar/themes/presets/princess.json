@@ -1,0 +1,47 @@
+{
+    "name": "princess",
+    "display_name": "Prinzessin",
+    "description": "Märchenhaftes Theme in Rosa und Lila",
+    "author": "System",
+    "is_custom": false,
+    "colors": {
+        "background": "#F8E5F4",
+        "background_secondary": "#FFEEF8",
+        "background_hover": "#FFD6F0",
+        "text_primary": "#6B2C5C",
+        "text_secondary": "#9B5C8B",
+        "text_disabled": "#D4A5C9",
+        "accent": "#E91E63",
+        "accent_hover": "#C2185B",
+        "accent_light": "#F06292",
+        "success": "#9C27B0",
+        "warning": "#FF6F00",
+        "error": "#D32F2F",
+        "info": "#AB47BC",
+        "border": "#F48FB1",
+        "shadow": "rgba(233, 30, 99, 0.15)",
+        "today_highlight": "#E91E63",
+        "weekend": "#CE93D8",
+        "event_default": "#AB47BC"
+    },
+    "font": {
+        "family": "Comic Sans MS",
+        "size_small": 11,
+        "size_normal": 13,
+        "size_large": 15,
+        "size_xlarge": 17,
+        "size_heading": 19,
+        "size_title": 22,
+        "weight_normal": "normal",
+        "weight_bold": "bold"
+    },
+    "decoration": {
+        "style": "princess",
+        "icon_style": "rounded",
+        "background_pattern": null,
+        "corner_decoration": true,
+        "corner_icon": null,
+        "border_style": "solid",
+        "border_decoration": null
+    }
+}

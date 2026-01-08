@@ -1,0 +1,47 @@
+{
+    "name": "football",
+    "display_name": "Fußball",
+    "description": "Sportliches Theme in Grün und Weiß",
+    "author": "System",
+    "is_custom": false,
+    "colors": {
+        "background": "#1B5E20",
+        "background_secondary": "#2E7D32",
+        "background_hover": "#388E3C",
+        "text_primary": "#FFFFFF",
+        "text_secondary": "#C8E6C9",
+        "text_disabled": "#81C784",
+        "accent": "#FFEB3B",
+        "accent_hover": "#FDD835",
+        "accent_light": "#FFF176",
+        "success": "#4CAF50",
+        "warning": "#FF9800",
+        "error": "#F44336",
+        "info": "#8BC34A",
+        "border": "#2E7D32",
+        "shadow": "rgba(0, 0, 0, 0.3)",
+        "today_highlight": "#FFEB3B",
+        "weekend": "#558B2F",
+        "event_default": "#8BC34A"
+    },
+    "font": {
+        "family": "Arial",
+        "size_small": 11,
+        "size_normal": 13,
+        "size_large": 15,
+        "size_xlarge": 17,
+        "size_heading": 19,
+        "size_title": 22,
+        "weight_normal": "normal",
+        "weight_bold": "bold"
+    },
+    "decoration": {
+        "style": "football",
+        "icon_style": "default",
+        "background_pattern": null,
+        "corner_decoration": true,
+        "corner_icon": null,
+        "border_style": "solid",
+        "border_decoration": null
+    }
+}

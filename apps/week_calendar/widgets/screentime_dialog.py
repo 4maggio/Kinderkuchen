@@ -1,10 +1,8 @@
-"""Screen time quick actions dialog.
-
-Shows remaining time with analog clock and quick action buttons.
-"""
+"""Screen time quick actions dialog with theme-aware styling."""
 
 import json
 from pathlib import Path
+from typing import Optional
 
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel,
@@ -15,6 +13,7 @@ from PyQt5.QtGui import QFont
 
 from utils.i18n import t
 from utils.screentime import AnalogClockWidget
+from themes.theme_manager import Theme, ThemeColors
 
 
 class ScreenTimeQuickActionsDialog(QDialog):
@@ -24,7 +23,7 @@ class ScreenTimeQuickActionsDialog(QDialog):
     timer_cancelled = pyqtSignal()  # Emits when timer cancelled
     credit_tomorrow = pyqtSignal(int)  # Emits minutes to credit for tomorrow
     
-    def __init__(self, remaining_seconds: int, total_seconds: int, parent=None):
+    def __init__(self, remaining_seconds: int, total_seconds: int, parent=None, theme: Optional[Theme] = None):
         """Initialize quick actions dialog.
         
         Args:
@@ -37,6 +36,7 @@ class ScreenTimeQuickActionsDialog(QDialog):
         self.remaining_seconds = remaining_seconds
         self.total_seconds = total_seconds
         self.pin_code = self._load_pin()
+        self.theme_colors = (theme.colors if theme else ThemeColors())
         
         self._init_ui()
     
@@ -64,35 +64,7 @@ class ScreenTimeQuickActionsDialog(QDialog):
         if self.parent():
             self.setGeometry(self.parent().geometry())
         
-        self.setStyleSheet("""
-            QDialog {
-                background-color: #2C3E50;
-            }
-            QLabel {
-                color: white;
-            }
-            QPushButton {
-                background-color: #34495E;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 12px;
-                font-size: 14px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #3E5161;
-            }
-            QPushButton:pressed {
-                background-color: #1ABC9C;
-            }
-            QPushButton#cancel_btn {
-                background-color: #E74C3C;
-            }
-            QPushButton#cancel_btn:hover {
-                background-color: #C0392B;
-            }
-        """)
+        self._apply_theme_styles()
         
         layout = QVBoxLayout(self)
         layout.setSpacing(20)
@@ -105,7 +77,7 @@ class ScreenTimeQuickActionsDialog(QDialog):
         layout.addWidget(title)
         
         # Analog clock
-        self.clock = AnalogClockWidget(self.remaining_seconds)
+        self.clock = AnalogClockWidget(self.remaining_seconds, theme_colors=self.theme_colors)
         self.clock.set_remaining(self.remaining_seconds, self.total_seconds)
         self.clock.setFixedSize(350, 350)
         clock_container = QHBoxLayout()
@@ -160,6 +132,39 @@ class ScreenTimeQuickActionsDialog(QDialog):
         cancel_btn.setObjectName("cancel_btn")
         cancel_btn.clicked.connect(self._cancel_timer)
         layout.addWidget(cancel_btn)
+
+    def _apply_theme_styles(self):
+        """Apply theme palette to the dialog widgets."""
+        c = self.theme_colors
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {c.background};
+            }}
+            QLabel {{
+                color: {c.text_primary};
+            }}
+            QPushButton {{
+                background-color: {c.background_secondary};
+                color: {c.text_primary};
+                border: none;
+                border-radius: 8px;
+                padding: 12px;
+                font-size: 14px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background-color: {c.background_hover};
+            }}
+            QPushButton:pressed {{
+                background-color: {c.accent};
+            }}
+            QPushButton#cancel_btn {{
+                background-color: {c.error};
+            }}
+            QPushButton#cancel_btn:hover {{
+                background-color: {c.warning};
+            }}
+        """)
     
     def update_time(self, remaining_seconds: int, total_seconds: int):
         """Update the displayed time.

@@ -1,0 +1,47 @@
+{
+    "name": "ocean",
+    "display_name": "Ozean",
+    "description": "Maritimes Theme in Blau- und Türkistönen",
+    "author": "System",
+    "is_custom": false,
+    "colors": {
+        "background": "#006064",
+        "background_secondary": "#00838F",
+        "background_hover": "#0097A7",
+        "text_primary": "#FFFFFF",
+        "text_secondary": "#B2EBF2",
+        "text_disabled": "#80DEEA",
+        "accent": "#00BCD4",
+        "accent_hover": "#00ACC1",
+        "accent_light": "#26C6DA",
+        "success": "#4DB6AC",
+        "warning": "#FFB74D",
+        "error": "#EF5350",
+        "info": "#4FC3F7",
+        "border": "#00838F",
+        "shadow": "rgba(0, 0, 0, 0.25)",
+        "today_highlight": "#00BCD4",
+        "weekend": "#00796B",
+        "event_default": "#4FC3F7"
+    },
+    "font": {
+        "family": "Arial",
+        "size_small": 10,
+        "size_normal": 12,
+        "size_large": 14,
+        "size_xlarge": 16,
+        "size_heading": 18,
+        "size_title": 20,
+        "weight_normal": "normal",
+        "weight_bold": "bold"
+    },
+    "decoration": {
+        "style": "ocean",
+        "icon_style": "rounded",
+        "background_pattern": null,
+        "corner_decoration": true,
+        "corner_icon": null,
+        "border_style": "solid",
+        "border_decoration": null
+    }
+}

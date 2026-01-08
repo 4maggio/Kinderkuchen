@@ -1,12 +1,13 @@
-"""
-Navigation bar widget for view switching and app control.
-"""
+"""Navigation bar widget for view switching and app control."""
+
+from typing import Optional
 
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QPushButton
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
 
 from utils.i18n import t
+from themes.theme_manager import Theme, ThemeColors
 
 
 class NavigationBar(QWidget):
@@ -26,33 +27,14 @@ class NavigationBar(QWidget):
         super().__init__(parent)
         
         self.active_view = "week"
+        self.theme_colors = ThemeColors()
         self._init_ui()
+        self._apply_theme_styles()
     
     def _init_ui(self):
         """Initialize the UI."""
         self.setFixedHeight(60)
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #34495E;
-            }
-            QPushButton {
-                background-color: #34495E;
-                color: #BDC3C7;
-                border: none;
-                border-radius: 5px;
-                padding: 8px 16px;
-                font-size: 14px;
-                font-weight: bold;
-                min-width: 80px;
-            }
-            QPushButton:hover {
-                background-color: #3E5161;
-            }
-            QPushButton[active="true"] {
-                background-color: #1ABC9C;
-                color: white;
-            }
-        """)
+        self.setObjectName("NavigationBar")
         
         layout = QHBoxLayout(self)
         layout.setContentsMargins(10, 5, 10, 5)
@@ -111,6 +93,37 @@ class NavigationBar(QWidget):
         
         # Store for timer display
         self.showing_timer = False
+
+    def _apply_theme_styles(self):
+        """Apply stylesheet derived from the current theme colors."""
+        c = self.theme_colors
+        self.setStyleSheet(f"""
+            QWidget#NavigationBar {{
+                background-color: {c.background_secondary};
+            }}
+            QWidget#NavigationBar QPushButton {{
+                background-color: {c.background_secondary};
+                color: {c.text_secondary};
+                border: none;
+                border-radius: 8px;
+                padding: 8px 16px;
+                font-size: 14px;
+                font-weight: bold;
+                min-width: 80px;
+            }}
+            QWidget#NavigationBar QPushButton:hover {{
+                background-color: {c.background_hover};
+            }}
+            QWidget#NavigationBar QPushButton[active="true"] {{
+                background-color: {c.accent};
+                color: {c.text_primary};
+            }}
+        """)
+
+    def apply_theme(self, theme: Optional[Theme]):
+        """Update the navigation bar palette based on theme colors."""
+        self.theme_colors = theme.colors if theme else ThemeColors()
+        self._apply_theme_styles()
     
     def _on_view_clicked(self, view_name: str):
         """Handle view button click.

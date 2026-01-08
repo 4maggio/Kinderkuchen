@@ -2,13 +2,13 @@
   "language": "de",
   "weather": {
     "location_mode": "manual",
-    "manual_location": "Porto",
-    "latitude": 41.14961,
-    "longitude": -8.61099,
-    "timezone": "Europe/Lisbon"
+    "manual_location": "Munich",
+    "latitude": 48.13743,
+    "longitude": 11.57549,
+    "timezone": "Europe/Berlin"
   },
   "year_view": {
-    "start_month_mode": "custom",
+    "start_month_mode": "january",
     "custom_start_month": 6
   },
   "sync": {
@@ -36,8 +36,64 @@
     "usage_times_mode": "weekly"
   },
   "appearance": {
-    "font_size": 10,
-    "font_family": "Comic Sans MS",
-    "theme": "light"
+    "font_size": 16,
+    "font_family": "Helvetica",
+    "theme": "princess",
+    "icon_size": 40,
+    "font_scale_small": 0,
+    "font_scale_large": 100,
+    "tile_icon_size": 64,
+    "hero_icon_size": 159,
+    "calendar_icon_size": 48
+  },
+  "launcher": {
+    "grid_rows": 2,
+    "grid_columns": 2,
+    "apps": []
+  },
+  "daily_icons": {
+    "mode": "always",
+    "default_icons": [
+      "\ud83c\udff0",
+      "\ud83c\udf1f",
+      "\ud83c\udfa8"
+    ],
+    "weekly_icons": {
+      "monday": [
+        "\ud83c\udff0",
+        "\ud83c\udf1f",
+        "\ud83c\udfa8"
+      ],
+      "tuesday": [
+        "\ud83c\udff0",
+        "\ud83c\udf1f",
+        "\ud83c\udfa8"
+      ],
+      "wednesday": [
+        "\ud83c\udff0",
+        "\ud83c\udf1f",
+        "\ud83c\udfa8"
+      ],
+      "thursday": [
+        "\ud83c\udff0",
+        "\ud83c\udf1f",
+        "\ud83c\udfa8"
+      ],
+      "friday": [
+        "\ud83c\udff0",
+        "\ud83c\udf1f",
+        "\ud83c\udfa8"
+      ],
+      "saturday": [
+        "\ud83c\udff0",
+        "\ud83c\udf1f",
+        "\ud83c\udfa8"
+      ],
+      "sunday": [
+        "\ud83c\udff0",
+        "\ud83c\udf1f",
+        "\ud83c\udfa8"
+      ]
+    }
   }
 }

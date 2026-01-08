@@ -5,7 +5,7 @@ Shows Monday-Sunday with weather and activity icons for each day.
 """
 
 from datetime import date, timedelta
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
@@ -15,6 +15,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QFont
 
 from utils.i18n import t
+from themes.theme_manager import Theme, ThemeColors
 
 
 class WeekView(QWidget):
@@ -34,31 +35,14 @@ class WeekView(QWidget):
         self.database = database
         self.current_date = current_date or date.today()
         self.week_start = self._get_week_start(self.current_date)
+        self.theme_colors = ThemeColors()
         
         self._init_ui()
         self.refresh()
     
     def _init_ui(self):
         """Initialize the user interface."""
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #2C3E50;
-                color: white;
-            }
-            QLabel {
-                color: white;
-            }
-            QPushButton {
-                background-color: #34495E;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 5px;
-            }
-            QPushButton:pressed {
-                background-color: #1ABC9C;
-            }
-        """)
+        self.setObjectName("WeekView")
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -94,6 +78,7 @@ class WeekView(QWidget):
             self.day_widgets.append(day_widget)
         
         layout.addLayout(grid, 1)
+        self._apply_theme_styles()
     
     def _create_day_column(self, col_index: int) -> QWidget:
         """Create a day column widget.
@@ -105,13 +90,6 @@ class WeekView(QWidget):
             Day column widget
         """
         container = QFrame()
-        container.setStyleSheet("""
-            QFrame {
-                background-color: #34495E;
-                border-radius: 8px;
-                padding: 5px;
-            }
-        """)
         container.setObjectName(f"day_{col_index}")
         
         # Make clickable
@@ -157,7 +135,54 @@ class WeekView(QWidget):
         
         layout.addStretch()
         
+        self._style_day_container(container)
         return container
+
+    def apply_theme(self, theme: Optional[Theme]):
+        """Apply theme palette to the week view."""
+        self.theme_colors = theme.colors if theme else ThemeColors()
+        # Update fonts from theme
+        if theme and hasattr(theme, 'font'):
+            self.week_label.setFont(QFont(theme.font.family, theme.font.size_large, QFont.Bold))
+        self._apply_theme_styles()
+
+    def _apply_theme_styles(self):
+        """Refresh styles after theme change."""
+        c = self.theme_colors
+        self.setStyleSheet(f"""
+            QWidget#WeekView {{
+                background-color: {c.background};
+                color: {c.text_primary};
+            }}
+            QWidget#WeekView QLabel {{
+                color: {c.text_primary};
+            }}
+            QWidget#WeekView QPushButton {{
+                background-color: {c.background_secondary};
+                color: {c.text_primary};
+                border: none;
+                border-radius: 5px;
+                padding: 5px;
+            }}
+            QWidget#WeekView QPushButton:pressed {{
+                background-color: {c.accent};
+            }}
+        """)
+        for idx, container in enumerate(self.day_widgets):
+            day_date = self.week_start + timedelta(days=idx)
+            self._style_day_container(container, day_date == date.today())
+
+    def _style_day_container(self, container: QFrame, highlight: bool = False):
+        """Style a single day container."""
+        c = self.theme_colors
+        if highlight:
+            container.setStyleSheet(
+                f"QFrame {{ background-color: {c.accent}; border-radius: 8px; padding: 5px; border: 2px solid {c.accent_hover}; }}"
+            )
+        else:
+            container.setStyleSheet(
+                f"QFrame {{ background-color: {c.background_secondary}; border-radius: 8px; padding: 5px; }}"
+            )
     
     def _get_week_start(self, target_date: date) -> date:
         """Get the Monday of the week containing target_date.
@@ -172,6 +197,11 @@ class WeekView(QWidget):
         days_since_monday = target_date.weekday()
         monday = target_date - timedelta(days=days_since_monday)
         return monday
+    
+    def set_calendar_icon_size(self, size: int):
+        """Adjust icon size for calendar display."""
+        # WeekView doesn't currently display icons but method added for consistency
+        pass
     
     def refresh(self):
         """Refresh the view with current week's data."""
@@ -202,25 +232,7 @@ class WeekView(QWidget):
         """
         container = self.day_widgets[col]
         
-        # Highlight today
-        is_today = day_date == date.today()
-        if is_today:
-            container.setStyleSheet("""
-                QFrame {
-                    background-color: #1ABC9C;
-                    border-radius: 8px;
-                    padding: 5px;
-                    border: 2px solid #16A085;
-                }
-            """)
-        else:
-            container.setStyleSheet("""
-                QFrame {
-                    background-color: #34495E;
-                    border-radius: 8px;
-                    padding: 5px;
-                }
-            """)
+        self._style_day_container(container, day_date == date.today())
         
         # Update day name with translation
         day_name_label = container.findChild(QLabel, f"day_name_{col}")

@@ -1,6 +1,15 @@
 ## Deployment auf Raspberry Pi (DietPi / Raspbian)
 
-Kurzanleitung zum Deployen des Launchers auf einem Raspberry Pi.
+**⚠️ HINWEIS: Für automatische Installation siehe [INSTALL.md](INSTALL.md)**
+
+Diese Anleitung ist für manuelle Installation. Für einfache Installation verwende:
+```bash
+sudo bash install.sh
+```
+
+---
+
+### Manuelle Installation (falls automatisches Skript nicht gewünscht)
 
 1) Systemvoraussetzungen
 - Raspbian / DietPi mit X11 und touchscreen-Treiber
@@ -11,7 +20,7 @@ Kurzanleitung zum Deployen des Launchers auf einem Raspberry Pi.
 ```bash
 sudo apt update
 sudo apt install -y python3 python3-venv python3-pip \
-	python3-pyqt5 chromium-browser openbox
+	python3-pyqt5 chromium-browser openbox xinit x11-xserver-utils unclutter
 ```
 
 3) Dateien auf das Pi kopieren
@@ -19,6 +28,10 @@ sudo apt install -y python3 python3-venv python3-pip \
 ```bash
 # auf dem Entwicklerrechner
 scp -r ./* dietpi@raspberrypi:/home/dietpi/kidlauncher
+
+# Oder direkt auf dem Pi klonen:
+cd ~
+git clone https://github.com/4maggio/Kinderkuchen.git kidlauncher
 ```
 
 4) Installation und virtuelle Umgebung auf dem Pi

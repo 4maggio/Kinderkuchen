@@ -1,0 +1,47 @@
+{
+    "name": "dinosaurs",
+    "display_name": "Dinosaurier",
+    "description": "Dino-Theme mit grünen Tönen und prähistorischem Flair",
+    "author": "System",
+    "is_custom": false,
+    "colors": {
+        "background": "#2D4A2B",
+        "background_secondary": "#3A5F38",
+        "background_hover": "#4A7548",
+        "text_primary": "#F5F5DC",
+        "text_secondary": "#D4D4B8",
+        "text_disabled": "#8B8B70",
+        "accent": "#8BC34A",
+        "accent_hover": "#7CB342",
+        "accent_light": "#9CCC65",
+        "success": "#689F38",
+        "warning": "#FFA726",
+        "error": "#D32F2F",
+        "info": "#66BB6A",
+        "border": "#3A5F38",
+        "shadow": "rgba(0, 0, 0, 0.3)",
+        "today_highlight": "#8BC34A",
+        "weekend": "#557053",
+        "event_default": "#66BB6A"
+    },
+    "font": {
+        "family": "Comic Sans MS",
+        "size_small": 11,
+        "size_normal": 13,
+        "size_large": 15,
+        "size_xlarge": 17,
+        "size_heading": 19,
+        "size_title": 22,
+        "weight_normal": "normal",
+        "weight_bold": "bold"
+    },
+    "decoration": {
+        "style": "dinosaurs",
+        "icon_style": "rounded",
+        "background_pattern": null,
+        "corner_decoration": true,
+        "corner_icon": null,
+        "border_style": "solid",
+        "border_decoration": null
+    }
+}

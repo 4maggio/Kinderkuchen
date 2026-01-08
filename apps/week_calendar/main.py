@@ -3,13 +3,15 @@
 Provides kid-friendly calendar interface with day/week/month/year views.
 """
 
+import copy
 import sys
 from pathlib import Path
 from datetime import date
+from typing import Optional
 
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, 
-    QStackedWidget
+    QStackedWidget, QDialog
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
@@ -28,6 +30,7 @@ from views.week_view import WeekView
 from views.day_view import DayView
 from views.month_view import MonthView
 from views.year_view import YearView
+from themes.theme_manager import get_theme_manager, Theme, ThemeColors
 
 
 class WeekCalendarApp(QMainWindow):
@@ -45,10 +48,17 @@ class WeekCalendarApp(QMainWindow):
         self.database = CalendarDatabase()
         self.current_date = date.today()
         
+        # Initialize theme manager
+        self.theme_manager = get_theme_manager()
+        self.current_theme = None
+        self.appearance_settings = {}
+        self.icon_size_override = 64
+        
         # Initialize screen time manager
         self.screentime_manager = ScreenTimeManager(self)
         
         self._init_ui()
+        self._load_and_apply_theme()
         self._populate_dummy_data_if_needed()
         
         # Start screentime after UI is ready
@@ -66,28 +76,6 @@ class WeekCalendarApp(QMainWindow):
             self.resize(800, 480)
         else:
             self.showFullScreen()
-        
-        # Set dark theme styling
-        self.setStyleSheet("""
-            QMainWindow {
-                background-color: #2C3E50;
-            }
-            QPushButton {
-                background-color: #34495E;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 10px;
-                font-size: 14px;
-                font-weight: bold;
-            }
-            QPushButton:pressed {
-                background-color: #1ABC9C;
-            }
-            QLabel {
-                color: white;
-            }
-        """)
         
         # Central widget with main layout
         central_widget = QWidget()
@@ -186,30 +174,245 @@ class WeekCalendarApp(QMainWindow):
             self.nav_bar.set_active_view(None)
     
     def _on_settings_clicked(self):
-        """Handle settings button click - open parental settings or screentime."""
+        """Handle settings button click - show fullscreen settings or screentime."""
         # If screentime is running and timer is displayed, show quick actions
         if self.nav_bar.showing_timer and self.screentime_manager.is_running():
             self._show_screentime_quick_actions()
         else:
-            # Otherwise show regular settings
-            settings_dialog = SettingsDialog(self.database, self)
-            settings_dialog.settings_changed.connect(self._on_settings_changed)
-            settings_dialog.exec_()
+            # Show settings as fullscreen view
+            self._show_settings_fullscreen()
+    
+    def _show_settings_fullscreen(self):
+        """Show settings view in fullscreen mode."""
+        # Store current theme for potential restore
+        previous_theme = copy.deepcopy(self.current_theme)
+        
+        # Create settings view if it doesn't exist
+        if not hasattr(self, 'settings_view'):
+            self.settings_view = SettingsDialog(self.database, self, theme=self.current_theme)
+            self.settings_view.settings_changed.connect(self._on_settings_changed)
+            self.settings_view.close_requested.connect(self._on_settings_closed)
+            self.settings_view.theme_preview_requested.connect(self._handle_theme_preview)
+            self.settings_view.theme_preview_reset.connect(lambda: self._restore_theme_snapshot(previous_theme))
+            self.view_stack.addWidget(self.settings_view)
+        
+        # Update theme in case it changed
+        self.settings_view.theme = self.current_theme
+        self.settings_view.theme_colors = self.current_theme.colors if self.current_theme else ThemeColors()
+        self.settings_view._apply_theme_styles()
+        
+        # Hide navigation bar and show settings
+        self.nav_bar.hide()
+        self.view_stack.setCurrentWidget(self.settings_view)
+        self._settings_previous_theme = previous_theme
+    
+    def _on_settings_closed(self):
+        """Handle settings view close - return to previous view."""
+        # Show navigation bar
+        self.nav_bar.show()
+        
+        # Return to previous view (dashboard if unsure)
+        if self.view_stack.currentWidget() == self.settings_view:
+            self.view_stack.setCurrentWidget(self.dashboard_view)
+            self.nav_bar.set_active_view(None)
     
     def _on_settings_changed(self):
         """Handle settings changes - refresh weather and views."""
         print("Settings changed - refreshing data...")
         # Reload screentime settings
         self.screentime_manager.load_settings()
+        # Reload and apply theme in case it changed
+        self._load_and_apply_theme()
+        # Reload dashboard launcher config
+        if hasattr(self.dashboard_view, 'launcher_config'):
+            self.dashboard_view.launcher_config = self.dashboard_view._load_launcher_config()
+            self.dashboard_view._build_app_grid()
+            # Re-apply theme and icon size to new tiles
+            self.dashboard_view.apply_theme(self.current_theme)
+            if hasattr(self, 'icon_size_override'):
+                self.dashboard_view.set_icon_size(self.icon_size_override)
         # TODO: Reload weather with new location settings
         # TODO: Refresh all views
         self._refresh_current_view()
+    
+    def _handle_theme_preview(self, theme_name: str, overrides: dict):
+        """Apply a live preview theme without persisting it."""
+        theme = self.theme_manager.get_theme(theme_name)
+        if not theme:
+            return
+        self._apply_theme(theme, overrides)
+    
+    def _restore_theme_snapshot(self, snapshot: Optional[Theme]):
+        """Restore the last persisted theme when cancelling previews."""
+        if snapshot:
+            self._apply_theme(snapshot, self.appearance_settings)
+        else:
+            self._load_and_apply_theme()
     
     def _show_week_view(self):
         """Show week view from dashboard."""
         self.view_stack.setCurrentWidget(self.week_view)
         self.nav_bar.set_active_view("week")
         self.week_view.refresh()    
+    def _load_and_apply_theme(self):
+        """Load theme from settings and apply it to the application."""
+        # Load theme name from settings.json
+        import json
+        settings_path = Path(__file__).parent / "config" / "settings.json"
+        default_theme = "princess"
+        theme_name = default_theme
+        self.appearance_settings = {}
+        
+        try:
+            if settings_path.exists():
+                with open(settings_path, 'r') as f:
+                    settings = json.load(f)
+                    appearance = settings.get("appearance", {}) or {}
+                    self.appearance_settings = appearance
+                    theme_name = appearance.get("theme", default_theme)
+        except Exception as e:
+            print(f"Error loading theme setting: {e}")
+            self.appearance_settings = {}
+        
+        if not theme_name:
+            theme_name = default_theme
+        
+        # Get theme from theme manager
+        theme = self.theme_manager.get_theme(theme_name)
+        
+        # Fallback to princess preset first, then dark theme
+        if theme is None and theme_name != default_theme:
+            print(f"Theme '{theme_name}' not found, switching to '{default_theme}'")
+            theme = self.theme_manager.get_theme(default_theme)
+
+        if theme is None:
+            print("Princess theme missing, falling back to 'dark'")
+            theme = self.theme_manager.get_theme("dark")
+        
+        # If still None, create a default dark theme
+        if theme is None:
+            from themes.theme_manager import Theme
+            theme = Theme(name=default_theme, display_name="Princess")
+        
+        self._apply_theme(theme, self.appearance_settings)
+    
+    def _apply_theme(self, theme: Theme, overrides: Optional[dict] = None):
+        """Apply theme to the application with optional appearance overrides."""
+        if theme is None:
+            return
+        effective_overrides = overrides if overrides is not None else self.appearance_settings
+        applied_theme = self._merge_theme_overrides(theme, effective_overrides)
+        self.current_theme = applied_theme
+        
+        stylesheet = applied_theme.generate_stylesheet()
+        self.setStyleSheet(stylesheet)
+        
+        font = QFont(applied_theme.font.family, applied_theme.font.size_normal)
+        QApplication.instance().setFont(font)
+        
+        self._apply_theme_to_components(applied_theme)
+        self._apply_icon_size(effective_overrides)
+        print(f"Applied theme: {applied_theme.display_name}")
+
+    def _merge_theme_overrides(self, theme: Theme, overrides: Optional[dict]) -> Theme:
+        """Combine base theme values with appearance overrides from settings."""
+        merged_theme = copy.deepcopy(theme)
+        if not overrides:
+            return merged_theme
+        if overrides.get("font_family"):
+            merged_theme.font.family = overrides["font_family"]
+        if "font_size" in overrides and overrides["font_size"]:
+            try:
+                requested_size = int(overrides["font_size"])
+            except (TypeError, ValueError):
+                requested_size = merged_theme.font.size_normal
+            delta = requested_size - merged_theme.font.size_normal
+            merged_theme.font.size_normal = requested_size
+            merged_theme.font.size_small = max(6, merged_theme.font.size_small + delta)
+            merged_theme.font.size_large = max(8, merged_theme.font.size_large + delta)
+            merged_theme.font.size_xlarge = max(10, merged_theme.font.size_xlarge + delta)
+            merged_theme.font.size_heading = max(12, merged_theme.font.size_heading + delta)
+            merged_theme.font.size_title = max(14, merged_theme.font.size_title + delta)
+        
+        # Apply font scaling percentages
+        font_scale_small = overrides.get("font_scale_small", 0)
+        font_scale_large = overrides.get("font_scale_large", 50)
+        
+        try:
+            scale_small = float(font_scale_small) / 100.0
+            scale_large = float(font_scale_large) / 100.0
+            
+            # Apply to smaller fonts (menus, labels, etc.)
+            merged_theme.font.size_small = max(6, int(merged_theme.font.size_small * (1 + scale_small)))
+            
+            # Apply to larger fonts (tiles, icons, headers)
+            merged_theme.font.size_large = max(8, int(merged_theme.font.size_large * (1 + scale_large)))
+            merged_theme.font.size_xlarge = max(10, int(merged_theme.font.size_xlarge * (1 + scale_large)))
+            merged_theme.font.size_heading = max(12, int(merged_theme.font.size_heading * (1 + scale_large)))
+            merged_theme.font.size_title = max(14, int(merged_theme.font.size_title * (1 + scale_large)))
+        except (TypeError, ValueError, ZeroDivisionError):
+            pass  # Keep defaults if scaling fails
+        
+        return merged_theme
+    
+    def _apply_theme_to_components(self, theme):
+        """Propagate theme updates to child widgets."""
+        targets = [
+            getattr(self, 'nav_bar', None),
+            getattr(self, 'dashboard_view', None),
+            getattr(self, 'day_view', None),
+            getattr(self, 'week_view', None),
+            getattr(self, 'month_view', None),
+            getattr(self, 'year_view', None)
+        ]
+        for widget in targets:
+            if widget and hasattr(widget, 'apply_theme'):
+                widget.apply_theme(theme)
+        if hasattr(self, 'screentime_manager') and self.screentime_manager:
+            self.screentime_manager.set_theme(theme)
+
+    def _apply_icon_size(self, overrides: Optional[dict]):
+        """Propagate the configured icon sizes to widgets that support it."""
+        # Get the three separate icon sizes
+        tile_size = self._resolve_icon_size(overrides, 'tile_icon_size', 64, 32, 120)
+        hero_size = self._resolve_icon_size(overrides, 'hero_icon_size', 96, 64, 160)
+        calendar_size = self._resolve_icon_size(overrides, 'calendar_icon_size', 48, 24, 96)
+        
+        # Apply to dashboard (has both tiles and hero icons)
+        dashboard = getattr(self, 'dashboard_view', None)
+        if dashboard:
+            if hasattr(dashboard, 'set_tile_icon_size'):
+                dashboard.set_tile_icon_size(tile_size)
+            if hasattr(dashboard, 'set_hero_icon_size'):
+                dashboard.set_hero_icon_size(hero_size)
+        
+        # Apply calendar icon size to all calendar views
+        calendar_views = [
+            getattr(self, 'day_view', None),
+            getattr(self, 'week_view', None),
+            getattr(self, 'month_view', None),
+            getattr(self, 'year_view', None)
+        ]
+        for view in calendar_views:
+            if view and hasattr(view, 'set_calendar_icon_size'):
+                view.set_calendar_icon_size(calendar_size)
+
+    def _resolve_icon_size(self, overrides: Optional[dict], key: str, default: int, min_val: int, max_val: int) -> int:
+        """Resolve icon size from overrides/settings with sane fallbacks."""
+        candidates = []
+        if overrides:
+            candidates.append(overrides.get(key))
+        if self.appearance_settings:
+            candidates.append(self.appearance_settings.get(key))
+        for value in candidates:
+            try:
+                sanitized = int(value)
+            except (TypeError, ValueError):
+                continue
+            if sanitized > 0:
+                return max(min_val, min(max_val, sanitized))
+        return default
+    
     def _rotate_display(self):
         """Rotate display 90 degrees clockwise."""
         # Get current rotation from database settings
@@ -321,7 +524,8 @@ class WeekCalendarApp(QMainWindow):
             self.quick_actions_dialog = ScreenTimeQuickActionsDialog(
                 remaining_seconds,
                 total_seconds,
-                self
+                self,
+                theme=self.current_theme
             )
             
             # Connect signals

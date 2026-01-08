@@ -1,0 +1,47 @@
+{
+    "name": "horses",
+    "display_name": "Pferde",
+    "description": "Naturnahes Theme in Braun- und Beigetönen",
+    "author": "System",
+    "is_custom": false,
+    "colors": {
+        "background": "#8D6E63",
+        "background_secondary": "#A1887F",
+        "background_hover": "#BCAAA4",
+        "text_primary": "#FFFFFF",
+        "text_secondary": "#EFEBE9",
+        "text_disabled": "#D7CCC8",
+        "accent": "#FF6F00",
+        "accent_hover": "#E65100",
+        "accent_light": "#FF8F00",
+        "success": "#689F38",
+        "warning": "#FFA726",
+        "error": "#D32F2F",
+        "info": "#8D6E63",
+        "border": "#6D4C41",
+        "shadow": "rgba(0, 0, 0, 0.2)",
+        "today_highlight": "#FF6F00",
+        "weekend": "#795548",
+        "event_default": "#A1887F"
+    },
+    "font": {
+        "family": "Georgia",
+        "size_small": 11,
+        "size_normal": 13,
+        "size_large": 15,
+        "size_xlarge": 17,
+        "size_heading": 19,
+        "size_title": 22,
+        "weight_normal": "normal",
+        "weight_bold": "bold"
+    },
+    "decoration": {
+        "style": "horses",
+        "icon_style": "default",
+        "background_pattern": null,
+        "corner_decoration": true,
+        "corner_icon": null,
+        "border_style": "solid",
+        "border_decoration": null
+    }
+}

@@ -1,0 +1,47 @@
+{
+    "name": "dark",
+    "display_name": "Dunkel",
+    "description": "Dunkles Theme mit türkisen Akzenten",
+    "author": "System",
+    "is_custom": false,
+    "colors": {
+        "background": "#2C3E50",
+        "background_secondary": "#34495E",
+        "background_hover": "#3D5A6C",
+        "text_primary": "#FFFFFF",
+        "text_secondary": "#BDC3C7",
+        "text_disabled": "#7F8C8D",
+        "accent": "#1ABC9C",
+        "accent_hover": "#16A085",
+        "accent_light": "#48C9B0",
+        "success": "#27AE60",
+        "warning": "#F39C12",
+        "error": "#E74C3C",
+        "info": "#3498DB",
+        "border": "#34495E",
+        "shadow": "rgba(0, 0, 0, 0.2)",
+        "today_highlight": "#1ABC9C",
+        "weekend": "#5D6D7E",
+        "event_default": "#3498DB"
+    },
+    "font": {
+        "family": "Arial",
+        "size_small": 10,
+        "size_normal": 12,
+        "size_large": 14,
+        "size_xlarge": 16,
+        "size_heading": 18,
+        "size_title": 20,
+        "weight_normal": "normal",
+        "weight_bold": "bold"
+    },
+    "decoration": {
+        "style": "none",
+        "icon_style": "default",
+        "background_pattern": null,
+        "corner_decoration": false,
+        "corner_icon": null,
+        "border_style": "solid",
+        "border_decoration": null
+    }
+}

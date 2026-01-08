@@ -92,8 +92,10 @@
         "tabs": {
             "weather": "🌤 Weather",
             "display": "🖥 Display",
+            "apps": "Apps",
             "sync": "🔄 Sync",
-            "security": "🔒 Security"
+            "security": "🔒 Security",
+            "about": "ℹ️ About"
         },
         "weather_tab": {
             "location_group": "Weather Location",
@@ -133,6 +135,44 @@
             "year_start_custom": "Custom Month",
             "custom_month": "Custom Month:"
         },
+        "appearance_tab": {
+            "title": "Appearance",
+            "font_group": "Font",
+            "font_size": "Font size:",
+            "font_family": "Font family:",            "icon_size": "Icon Size:",
+            "font_scale_small": "Adjust Smaller Fonts:",
+            "font_scale_large": "Adjust Larger Fonts:",            "theme_group": "Theme",
+            "theme": "Theme:",
+            "live_preview": "Live preview",
+            "live_preview_hint": "Apply theme and font changes immediately before saving."
+        },
+        "apps_tab": {
+            "grid_group": "Launcher Grid",
+            "rows": "Rows:",
+            "columns": "Columns:",
+            "apps_group": "App Tiles",
+            "apps_hint": "Pick which shortcuts appear on the kid dashboard and how large the grid should be.",
+            "add": "Add App",
+            "edit": "Edit",
+            "remove": "Remove",
+            "empty": "No apps configured yet.",
+            "unnamed": "Unnamed app",
+            "name": "Display Name:",
+            "name_placeholder": "e.g. Fairy Tale Player",
+            "type": "App Type:",
+            "python_path": "Python Script:",
+            "website_url": "Website URL:",
+            "dialog_title_new": "Add App",
+            "dialog_title_edit": "Edit App",
+            "choose_python": "Choose Python Script",
+            "validation_name": "Please enter a display name.",
+            "validation_python": "Please choose a Python script to launch.",
+            "validation_website": "Please enter a website URL.",
+            "types": {
+                "python": "Local Python App",
+                "website": "Website in Chromium"
+            }
+        },
         "sync_tab": {
             "webcal_group": "WebCal Synchronization",
             "enable_sync": "Enable WebCal sync",
@@ -147,6 +187,15 @@
             "pin_code": "PIN Code:",
             "pin_placeholder": "4-6 digits",
             "pin_warning": "⚠ Remember your PIN! Default is 1234"
+        },
+        "about_tab": {
+            "project_group": "Project",
+            "project_description": "The RaspiGui Kid Launcher keeps your Raspberry Pi in a safe, touch-friendly mode so kids can jump into their favorite apps without distractions.",
+            "repo_label": "Repository:",
+            "credits_group": "Credits & Thanks",
+            "credits_weather": "Weather data powered by {provider}.",
+            "credits_art": "Artwork generated with love by {artist}.",
+            "license_note": "License: MIT (see LICENSE)."
         }
     },
     "common": {
@@ -158,7 +207,9 @@
         "edit": "Edit",
         "add": "Add",
         "search": "Search",
-        "loading": "Loading..."
+        "loading": "Loading...",
+        "browse": "Browse...",
+        "error": "Error"
     },
     "screentime": {
         "group": "Screen Time",
@@ -181,5 +232,18 @@
         "double_tomorrow": "Double for Tomorrow",
         "cancel_timer": "Cancel Timer",
         "minutes_suffix": " min"
+    },
+    "themes": {
+        "dark": "Dark",
+        "light": "Light",
+        "dinosaurs": "Dinosaurs",
+        "princess": "Princess",
+        "football": "Football",
+        "horses": "Horses",
+        "ocean": "Ocean",
+        "icon_size": "Icon Size",
+        "icon_size_small": "Small",
+        "icon_size_medium": "Medium",
+        "icon_size_large": "Large"
     }
 }

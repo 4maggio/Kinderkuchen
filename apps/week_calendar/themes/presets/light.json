@@ -1,0 +1,47 @@
+{
+    "name": "light",
+    "display_name": "Hell",
+    "description": "Helles Theme mit blauen Akzenten",
+    "author": "System",
+    "is_custom": false,
+    "colors": {
+        "background": "#ECF0F1",
+        "background_secondary": "#FFFFFF",
+        "background_hover": "#BDC3C7",
+        "text_primary": "#2C3E50",
+        "text_secondary": "#7F8C8D",
+        "text_disabled": "#BDC3C7",
+        "accent": "#3498DB",
+        "accent_hover": "#2980B9",
+        "accent_light": "#5DADE2",
+        "success": "#27AE60",
+        "warning": "#F39C12",
+        "error": "#E74C3C",
+        "info": "#3498DB",
+        "border": "#BDC3C7",
+        "shadow": "rgba(0, 0, 0, 0.1)",
+        "today_highlight": "#3498DB",
+        "weekend": "#95A5A6",
+        "event_default": "#3498DB"
+    },
+    "font": {
+        "family": "Arial",
+        "size_small": 10,
+        "size_normal": 12,
+        "size_large": 14,
+        "size_xlarge": 16,
+        "size_heading": 18,
+        "size_title": 20,
+        "weight_normal": "normal",
+        "weight_bold": "bold"
+    },
+    "decoration": {
+        "style": "none",
+        "icon_style": "default",
+        "background_pattern": null,
+        "corner_decoration": false,
+        "corner_icon": null,
+        "border_style": "solid",
+        "border_decoration": null
+    }
+}

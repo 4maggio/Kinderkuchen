@@ -6,6 +6,7 @@ Shows a month in grid layout with mini-icons for events.
 
 from datetime import date, timedelta
 import calendar
+from typing import Optional
 
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
@@ -15,6 +16,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFont
 
 from utils.i18n import t
+from themes.theme_manager import Theme, ThemeColors
 
 
 class MonthView(QWidget):
@@ -33,31 +35,14 @@ class MonthView(QWidget):
         
         self.database = database
         self.current_date = current_date or date.today()
+        self.theme_colors = ThemeColors()
         
         self._init_ui()
         self.refresh()
     
     def _init_ui(self):
         """Initialize the user interface."""
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #2C3E50;
-                color: white;
-            }
-            QLabel {
-                color: white;
-            }
-            QPushButton {
-                background-color: #34495E;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 5px;
-            }
-            QPushButton:pressed {
-                background-color: #1ABC9C;
-            }
-        """)
+        self.setObjectName("MonthView")
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -106,6 +91,7 @@ class MonthView(QWidget):
                 self.day_cells.append(cell)
         
         layout.addLayout(self.calendar_grid, 1)
+        self._apply_theme_styles()
     
     def _create_day_cell(self, row: int, col: int) -> QWidget:
         """Create a day cell widget.
@@ -118,37 +104,77 @@ class MonthView(QWidget):
             Day cell widget
         """
         container = QFrame()
-        container.setStyleSheet("""
-            QFrame {
-                background-color: #34495E;
-                border-radius: 5px;
-                padding: 3px;
-            }
-        """)
-        container.setFixedHeight(60)
+        container.setMinimumHeight(70)
         container.setCursor(Qt.PointingHandCursor)
         container.setObjectName(f"cell_{row}_{col}")
         
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(2, 2, 2, 2)
+        layout.setContentsMargins(3, 3, 3, 3)
         layout.setSpacing(2)
         layout.setAlignment(Qt.AlignTop)
         
         # Day number
         day_label = QLabel()
         day_label.setAlignment(Qt.AlignCenter)
-        day_label.setFont(QFont("Arial", 12, QFont.Bold))
+        day_label.setFont(QFont("Arial", 11, QFont.Bold))
         day_label.setObjectName(f"day_num_{row}_{col}")
         layout.addWidget(day_label)
         
         # Icons container
         icons_label = QLabel()
         icons_label.setAlignment(Qt.AlignCenter)
-        icons_label.setFont(QFont("Arial", 16))
+        icons_label.setFont(QFont("Arial", 13))
+        icons_label.setWordWrap(True)
         icons_label.setObjectName(f"icons_{row}_{col}")
         layout.addWidget(icons_label)
         
+        self._style_day_cell(container)
         return container
+
+    def apply_theme(self, theme: Optional[Theme]):
+        """Apply theme colors to the month view."""
+        self.theme_colors = theme.colors if theme else ThemeColors()
+        # Update fonts from theme
+        if theme and hasattr(theme, 'font'):
+            self.month_label.setFont(QFont(theme.font.family, theme.font.size_heading, QFont.Bold))
+        self._apply_theme_styles()
+
+    def _apply_theme_styles(self):
+        """Refresh widgets after theme change."""
+        c = self.theme_colors
+        self.setStyleSheet(f"""
+            QWidget#MonthView {{
+                background-color: {c.background};
+                color: {c.text_primary};
+            }}
+            QWidget#MonthView QLabel {{
+                color: {c.text_primary};
+            }}
+            QWidget#MonthView QPushButton {{
+                background-color: {c.background_secondary};
+                color: {c.text_primary};
+                border: none;
+                border-radius: 5px;
+                padding: 5px;
+            }}
+            QWidget#MonthView QPushButton:pressed {{
+                background-color: {c.accent};
+            }}
+        """)
+        for cell in self.day_cells:
+            self._style_day_cell(cell)
+
+    def _style_day_cell(self, container: QFrame, highlight: bool = False):
+        """Style a calendar cell based on highlight state."""
+        c = self.theme_colors
+        if highlight:
+            container.setStyleSheet(
+                f"QFrame {{ background-color: {c.accent}; border-radius: 5px; padding: 5px; border: 2px solid {c.accent_hover}; }}"
+            )
+        else:
+            container.setStyleSheet(
+                f"QFrame {{ background-color: {c.background_secondary}; border-radius: 5px; padding: 5px; border: 1px solid {c.border}; }}"
+            )
     
     def set_date(self, target_date: date):
         """Set the date (month) to display.
@@ -158,6 +184,12 @@ class MonthView(QWidget):
         """
         self.current_date = target_date
         self.refresh()
+    
+    def set_calendar_icon_size(self, size: int):
+        """Adjust icon size for calendar display."""
+        # MonthView currently uses small emoji icons
+        # This method is added for future flexibility
+        pass
     
     def refresh(self):
         """Refresh the view with current month's data."""
@@ -209,13 +241,9 @@ class MonthView(QWidget):
             # Empty cell
             day_label.setText("")
             icons_label.setText("")
-            container.setStyleSheet("""
-                QFrame {
-                    background-color: #2C3E50;
-                    border-radius: 5px;
-                    padding: 3px;
-                }
-            """)
+            container.setStyleSheet(
+                f"QFrame {{ background-color: {self.theme_colors.background}; border-radius: 5px; padding: 3px; }}"
+            )
             container.mousePressEvent = lambda event: None
             return
         
@@ -224,23 +252,7 @@ class MonthView(QWidget):
         
         # Highlight today
         is_today = cell_date == date.today()
-        if is_today:
-            container.setStyleSheet("""
-                QFrame {
-                    background-color: #1ABC9C;
-                    border-radius: 5px;
-                    padding: 3px;
-                    border: 2px solid #16A085;
-                }
-            """)
-        else:
-            container.setStyleSheet("""
-                QFrame {
-                    background-color: #34495E;
-                    border-radius: 5px;
-                    padding: 3px;
-                }
-            """)
+        self._style_day_cell(container, is_today)
         
         # Get entries for this date
         entries = self.database.get_entries_by_date(cell_date)
