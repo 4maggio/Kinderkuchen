@@ -271,7 +271,8 @@ setup_venv() {
     
     # Determine if we should use system-site-packages (for system PyQt5)
     local venv_args=""
-    if [ "$PYQT_SYSTEM" = "1" ]; then
+    if [ "$PYQT_SYSTEM" = "0" ]; then
+        # Return 0 = System package was installed
         venv_args="--system-site-packages"
         print_success "venv wird mit Zugriff auf System-Pakete erstellt (für PyQt5)..."
     fi
@@ -292,7 +293,7 @@ setup_venv() {
     if [ -f "$INSTALL_DIR/requirements.txt" ]; then
         print_success "Installiere Python-Pakete..."
         
-        if [ "$PYQT_SYSTEM" = "1" ]; then
+        if [ "$PYQT_SYSTEM" = "0" ]; then
             # Skip PyQt5 from requirements.txt if using system package
             print_success "PyQt5 wird übersprungen (System-Paket wird verwendet)..."
             grep -v "^PyQt5" "$INSTALL_DIR/requirements.txt" > "$INSTALL_DIR/requirements_temp.txt"
