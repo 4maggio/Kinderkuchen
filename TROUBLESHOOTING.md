@@ -50,6 +50,25 @@ startx
 
 ### Installation schlägt fehl
 
+#### Problem: "Tried to start delayed item" oder Repository-Download-Fehler
+**Symptom:** Warnings wie "Tried to start delayed item libgdbm-compat4t64" während apt-get
+
+**Ursache:** Netzwerk-Timeouts oder Mirror-Probleme bei Debian-Repositories
+
+**Lösung:** Das install.sh Script hat automatische Retries (3 Versuche). Falls es trotzdem fehlschlägt:
+```bash
+# APT Cache leeren
+sudo apt-get clean
+
+# Nochmal versuchen
+sudo apt-get update
+sudo apt-get install -f
+
+# Falls weiterhin Probleme:
+sudo nano /etc/apt/sources.list
+# Wechsel zu anderem Mirror (z.B. ftp.de.debian.org statt deb.debian.org)
+```
+
 #### Problem: "Command not found: git"
 **Lösung:**
 ```bash

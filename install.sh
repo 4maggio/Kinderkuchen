@@ -96,11 +96,42 @@ update_system() {
     print_header "System Update"
     
     if ask_yes_no "System-Pakete aktualisieren?" "y"; then
-        apt-get update
+        # Clean apt cache to avoid download issues
+        apt-get clean
+        
+        # Configure apt for better reliability
+        cat > /etc/apt/apt.conf.d/99-dietpi-custom <<EOF
+Acquire::Retries "3";
+Acquire::http::Timeout "60";
+Acquire::https::Timeout "60";
+Acquire::Queue-Mode "host";
+EOF
+        
+        print_success "APT konfiguriert (Retries, Timeouts)"
+        
+        # Update with retries
+        local retry=0
+        local max_retries=3
+        while [ $retry -lt $max_retries ]; do
+            if apt-get update; then
+                break
+            fi
+            retry=$((retry + 1))
+            if [ $retry -lt $max_retries ]; then
+                print_warning "apt-get update fehlgeschlagen, Versuch $retry/$max_retries..."
+                sleep 5
+            else
+                print_error "apt-get update nach $max_retries Versuchen fehlgeschlagen"
+                return 1
+            fi
+        done
+        
         apt-get upgrade -y
         print_success "System aktualisiert"
     else
         print_warning "System-Update übersprungen"
+        # Still do a minimal update for package lists
+        apt-get update || print_warning "apt-get update fehlgeschlagen (fortfahren...)"
     fi
 }
 
@@ -175,6 +206,33 @@ optimize_dietpi() {
 }
 
 ###############################################################################
+# Safe APT Install Helper
+###############################################################################
+
+safe_apt_install() {
+    local packages="$@"
+    local retry=0
+    local max_retries=2
+    
+    while [ $retry -le $max_retries ]; do
+        if apt-get install -y --no-install-recommends $packages; then
+            return 0
+        fi
+        
+        retry=$((retry + 1))
+        if [ $retry -le $max_retries ]; then
+            print_warning "Installation fehlgeschlagen, Versuch $retry/$max_retries..."
+            apt-get clean
+            apt-get update -qq || true
+            sleep 3
+        else
+            print_error "Installation nach $max_retries Versuchen fehlgeschlagen: $packages"
+            return 1
+        fi
+    done
+}
+
+###############################################################################
 # Install Minimal X11 and Openbox
 ###############################################################################
 
@@ -190,12 +248,7 @@ install_x11() {
     fi
     
     # Minimal X11 packages (absolute minimum)
-    apt-get install -y --no-install-recommends \
-        xserver-xorg-core \
-        xserver-xorg-video-fbdev \
-        xinit \
-        openbox \
-        unclutter
+    safe_apt_install xserver-xorg-core xserver-xorg-video-fbdev xinit openbox unclutter
     
     print_success "X11 und Openbox installiert"
 }
@@ -208,14 +261,11 @@ install_python() {
     print_header "Python 3 Installation"
     
     # Install Python 3 and venv (minimal)
-    apt-get install -y --no-install-recommends \
-        python3 \
-        python3-venv \
-        python3-dev
+    safe_apt_install python3 python3-venv python3-dev
     
     # Git is optional - only install if user wants updates via git
     if ask_yes_no "Git installieren? (für Updates via git pull)" "n"; then
-        apt-get install -y --no-install-recommends git
+        safe_apt_install git
         print_success "Git installiert"
     else
         print_warning "Git übersprungen - Updates nur manuell möglich"
@@ -233,7 +283,7 @@ install_pyqt5() {
     
     if ask_yes_no "System-Paket verwenden? (empfohlen)" "y"; then
         # Only install base PyQt5 package (includes QtWidgets)
-        apt-get install -y --no-install-recommends python3-pyqt5
+        safe_apt_install python3-pyqt5
         
         print_success "PyQt5 als System-Paket installiert"
         return 0
@@ -258,7 +308,7 @@ install_chromium() {
         return
     fi
     
-    apt-get install -y --no-install-recommends chromium
+    safe_apt_install chromium
     
     print_success "Chromium installiert"
 }
@@ -280,7 +330,7 @@ install_vnc() {
     
     # Check if RealVNC is available in repositories
     if apt-cache show realvnc-vnc-server &>/dev/null; then
-        apt-get install -y --no-install-recommends realvnc-vnc-server
+        safe_apt_install realvnc-vnc-server
         
         # Enable VNC service
         systemctl enable vncserver-x11-serviced.service
@@ -313,7 +363,7 @@ install_onscreen_keyboard() {
         return
     fi
     
-    apt-get install -y --no-install-recommends matchbox-keyboard
+    safe_apt_install matchbox-keyboard
     
     print_success "On-Screen Keyboard installiert"
 }
@@ -460,7 +510,7 @@ configure_display() {
     # Ensure touchscreen input driver is available
     if ! dpkg -l | grep -q xserver-xorg-input-evdev; then
         print_header "Touchscreen Input-Treiber installieren"
-        apt-get install -y --no-install-recommends xserver-xorg-input-evdev
+        safe_apt_install xserver-xorg-input-evdev
         print_success "Input-Treiber installiert"
     fi
     
