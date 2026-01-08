@@ -196,8 +196,8 @@
             "repo_label": "Repository:",
             "credits_group": "Credits & Danke",
             "credits_weather": "Wetterdaten: {provider}",
-            "credits_art": "Artwork erstellt von {artist}.",
-            "license_note": "Lizenz: MIT (siehe LICENSE)."
+            "credits_art": "Artwork generiert von {artist} mithilfe von AI.",
+            "license_note": "Lizenz: GNU Affero General Public License v3.0 (AGPL-3.0) (siehe LICENSE)."
         }
     },
     "common": {

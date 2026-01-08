@@ -40,3 +40,9 @@ htmlcov/
 *.egg
 *.wheel
 *.env
+
+# Internal development documentation (not for public repo)
+Raspi_Concept
+Week_Concept
+notes_DO-NOT-CHANGE
+.github/copilot-instructions.md

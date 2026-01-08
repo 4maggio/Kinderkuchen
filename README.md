@@ -116,7 +116,7 @@ RaspiGui/
 ---
 
 Lizenz
-- Standard: MIT (siehe `LICENSE`). Bitte anpassen falls gewünscht.
+- GNU Affero General Public License v3.0 (AGPL-3.0) (siehe `LICENSE`)
 
 Contributing
 - Siehe `CONTRIBUTING.md` und `CODE_OF_CONDUCT.md`.

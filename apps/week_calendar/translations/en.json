@@ -139,9 +139,11 @@
             "title": "Appearance",
             "font_group": "Font",
             "font_size": "Font size:",
-            "font_family": "Font family:",            "icon_size": "Icon Size:",
+            "font_family": "Font family:",
+            "icon_size": "Icon Size:",
             "font_scale_small": "Adjust Smaller Fonts:",
-            "font_scale_large": "Adjust Larger Fonts:",            "theme_group": "Theme",
+            "font_scale_large": "Adjust Larger Fonts:",
+            "theme_group": "Theme",
             "theme": "Theme:",
             "live_preview": "Live preview",
             "live_preview_hint": "Apply theme and font changes immediately before saving."
@@ -195,7 +197,7 @@
             "credits_group": "Credits & Thanks",
             "credits_weather": "Weather data powered by {provider}.",
             "credits_art": "Artwork generated with love by {artist}.",
-            "license_note": "License: MIT (see LICENSE)."
+            "license_note": "License: GNU Affero General Public License v3.0 (AGPL-3.0) (see LICENSE)."
         }
     },
     "common": {

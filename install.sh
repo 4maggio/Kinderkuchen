@@ -46,6 +46,12 @@ ask_yes_no() {
     local prompt="$1"
     local default="${2:-y}"
     
+    # Auto-yes mode (full installation)
+    if [ "$AUTO_YES" = "true" ]; then
+        echo "$prompt [AUTO: yes]"
+        return 0
+    fi
+    
     if [ "$default" = "y" ]; then
         prompt="$prompt [Y/n]: "
     else
@@ -96,6 +102,76 @@ update_system() {
     else
         print_warning "System-Update übersprungen"
     fi
+}
+
+###############################################################################
+# DietPi Optimizations
+###############################################################################
+
+optimize_dietpi() {
+    # Only run if DietPi is detected
+    if [ ! -f /boot/dietpi/.version ]; then
+        return
+    fi
+    
+    print_header "DietPi Optimierungen"
+    
+    if ! ask_yes_no "DietPi für minimalen Ressourcen-Verbrauch optimieren?" "y"; then
+        return
+    fi
+    
+    # Disable unnecessary services for kiosk mode
+    echo "Deaktiviere unnötige Services..."
+    
+    # Services that are not needed for kiosk
+    SERVICES_TO_DISABLE=(
+        "bluetooth"
+        "avahi-daemon"
+        "triggerhappy"
+        "cron"
+    )
+    
+    for service in "${SERVICES_TO_DISABLE[@]}"; do
+        if systemctl is-enabled "$service" &>/dev/null; then
+            systemctl disable "$service" 2>/dev/null || true
+            systemctl stop "$service" 2>/dev/null || true
+            echo "  ✓ $service deaktiviert"
+        fi
+    done
+    
+    # Reduce logging to save I/O
+    if [ -f /etc/systemd/journald.conf ]; then
+        sed -i 's/^#Storage=.*/Storage=volatile/' /etc/systemd/journald.conf
+        sed -i 's/^#RuntimeMaxUse=.*/RuntimeMaxUse=20M/' /etc/systemd/journald.conf
+        echo "  ✓ Logging optimiert (volatile, max 20MB)"
+    fi
+    
+    # Hardware optimizations
+    CONFIG_FILE="/boot/config.txt"
+    if [ -f "$CONFIG_FILE" ]; then
+        echo ""
+        echo "Hardware-Optimierungen (für 7\" Touchscreen):"
+        
+        # Disable HDMI if using touchscreen
+        if ask_yes_no "HDMI deaktivieren? (empfohlen bei 7\" Touchscreen)" "y"; then
+            sed -i '/^hdmi_blanking=/d' "$CONFIG_FILE"
+            sed -i '/^hdmi_force_hotplug=/d' "$CONFIG_FILE"
+            echo "hdmi_blanking=2" >> "$CONFIG_FILE"
+            echo "hdmi_force_hotplug=0" >> "$CONFIG_FILE"
+            echo "  ✓ HDMI deaktiviert (spart ~5-10MB RAM)"
+        fi
+        
+        # Optional: Disable WiFi (only if ethernet available)
+        echo ""
+        echo "⚠️  ACHTUNG: WiFi nur deaktivieren wenn Ethernet verwendet wird!"
+        if ask_yes_no "WiFi deaktivieren? (nur bei Ethernet-Verbindung)" "n"; then
+            sed -i '/^dtoverlay=disable-wifi/d' "$CONFIG_FILE"
+            echo "dtoverlay=disable-wifi" >> "$CONFIG_FILE"
+            echo "  ✓ WiFi deaktiviert (spart ~10-15MB RAM)"
+        fi
+    fi
+    
+    print_success "DietPi optimiert - spart bis zu ~55MB RAM"
 }
 
 ###############################################################################
@@ -205,7 +281,16 @@ install_vnc() {
     # Check if RealVNC is available in repositories
     if apt-cache show realvnc-vnc-server &>/dev/null; then
         apt-get install -y --no-install-recommends realvnc-vnc-server
-        print_success "RealVNC Server installiert"
+        
+        # Enable VNC service
+        systemctl enable vncserver-x11-serviced.service
+        systemctl start vncserver-x11-serviced.service 2>/dev/null || true
+        
+        print_success "RealVNC Server installiert und aktiviert"
+        echo ""
+        echo "⚠️  WICHTIG: VNC-Passwort muss noch gesetzt werden:"
+        echo "    sudo vncpasswd -service"
+        echo "    (wird in den Eltern-Einstellungen auch konfigurierbar sein)"
     else
         print_warning "RealVNC nicht in Repositories gefunden"
         echo "Für Raspberry Pi OS kann RealVNC manuell installiert werden:"
@@ -315,12 +400,40 @@ setup_venv() {
 ###############################################################################
 
 configure_display() {
-    print_header "Display-Konfiguration"
+    print_header "Display & Touchscreen Konfiguration"
     
-    echo "Raspberry Pi 7\" Touchscreen Konfiguration"
+    echo "Raspberry Pi 7\" Touchscreen (offiziell) Konfiguration"
+    echo ""
     
-    if ! ask_yes_no "Display konfigurieren?" "y"; then
+    if ! ask_yes_no "Touchscreen konfigurieren?" "y"; then
         return
+    fi
+    
+    CONFIG_FILE="/boot/config.txt"
+    
+    if [ ! -f "$CONFIG_FILE" ]; then
+        print_error "$CONFIG_FILE nicht gefunden"
+        return
+    fi
+    
+    # Enable official 7" touchscreen overlay
+    print_header "Touchscreen Treiber aktivieren"
+    
+    # Remove old touchscreen configs
+    sed -i '/^dtoverlay=rpi-ft5406/d' "$CONFIG_FILE"
+    sed -i '/^dtoverlay=vc4-kms-v3d/d' "$CONFIG_FILE"
+    sed -i '/^dtoverlay=vc4-fkms-v3d/d' "$CONFIG_FILE"
+    
+    # Add touchscreen overlay (for official 7" display)
+    if ! grep -q "dtoverlay=rpi-ft5406" "$CONFIG_FILE"; then
+        echo "dtoverlay=rpi-ft5406" >> "$CONFIG_FILE"
+        print_success "Touchscreen Overlay aktiviert"
+    fi
+    
+    # Use fake KMS for better compatibility with Pi 2
+    if ! grep -q "dtoverlay=vc4-fkms-v3d" "$CONFIG_FILE"; then
+        echo "dtoverlay=vc4-fkms-v3d" >> "$CONFIG_FILE"
+        print_success "Video Treiber konfiguriert (vc4-fkms-v3d für Pi2)"
     fi
     
     # Ask for rotation
@@ -333,20 +446,25 @@ configure_display() {
     read -p "Rotation [0-3]: " rotation
     rotation=${rotation:-0}
     
-    # Update /boot/config.txt
-    CONFIG_FILE="/boot/config.txt"
-    if [ -f "$CONFIG_FILE" ]; then
-        # Remove old display_rotate settings
-        sed -i '/^display_rotate=/d' "$CONFIG_FILE"
-        
-        # Add new rotation
-        if [ "$rotation" != "0" ]; then
-            echo "display_rotate=$rotation" >> "$CONFIG_FILE"
-            print_success "Display-Rotation auf $rotation gesetzt"
-        fi
-    else
-        print_warning "$CONFIG_FILE nicht gefunden"
+    # Remove old display_rotate settings
+    sed -i '/^display_rotate=/d' "$CONFIG_FILE"
+    sed -i '/^lcd_rotate=/d' "$CONFIG_FILE"
+    
+    # Add new rotation
+    if [ "$rotation" != "0" ]; then
+        echo "display_rotate=$rotation" >> "$CONFIG_FILE"
+        echo "lcd_rotate=$rotation" >> "$CONFIG_FILE"
+        print_success "Display-Rotation auf $rotation gesetzt"
     fi
+    
+    # Ensure touchscreen input driver is available
+    if ! dpkg -l | grep -q xserver-xorg-input-evdev; then
+        print_header "Touchscreen Input-Treiber installieren"
+        apt-get install -y --no-install-recommends xserver-xorg-input-evdev
+        print_success "Input-Treiber installiert"
+    fi
+    
+    print_success "Touchscreen konfiguriert - Neustart erforderlich"
 }
 
 ###############################################################################
@@ -362,22 +480,17 @@ configure_autoboot() {
         return
     fi
     
-    # Create systemd service
+    # Create systemd service (as backup/monitoring - primary launch via .xinitrc)
     cat > /etc/systemd/system/kidlauncher.service <<EOF
 [Unit]
-Description=Kid Launcher GUI
+Description=Kid Launcher GUI (Monitor)
 After=graphical.target
 
 [Service]
-Type=simple
+Type=oneshot
 User=$SERVICE_USER
-Environment=DISPLAY=:0
-Environment=XAUTHORITY=/home/$SERVICE_USER/.Xauthority
-WorkingDirectory=$INSTALL_DIR
-ExecStartPre=/bin/sleep 5
-ExecStart=$VENV_DIR/bin/python $INSTALL_DIR/apps/week_calendar/main.py
-Restart=always
-RestartSec=10
+RemainAfterExit=yes
+ExecStart=/bin/true
 
 [Install]
 WantedBy=graphical.target
@@ -397,8 +510,15 @@ xset s noblank
 # Hide cursor
 unclutter -idle 0.1 &
 
-# Start Openbox
-exec openbox-session
+# Start Openbox in background
+openbox &
+
+# Wait a moment for Openbox to start
+sleep 2
+
+# Launch the Kid Launcher app
+cd "$INSTALL_DIR"
+"$VENV_DIR/bin/python" "$INSTALL_DIR/apps/week_calendar/main.py"
 EOF
     
     chmod +x /home/$SERVICE_USER/.xinitrc
@@ -544,16 +664,38 @@ EOF
     echo ""
     echo "Geschätzte Installationszeit: 10-30 Minuten"
     echo ""
+    echo "Installation starten? [y/n/full]"
+    echo "  y    = Interaktiv (mit Rückfragen)"
+    echo "  n    = Abbrechen"
+    echo "  full = Automatisch ALLE Pakete installieren (keine Rückfragen)"
+    echo ""
+    read -p "Deine Wahl [y]: " install_choice
+    install_choice=${install_choice:-y}
     
-    if ! ask_yes_no "Installation starten?" "y"; then
-        print_warning "Installation abgebrochen"
-        exit 0
-    fi
+    case $install_choice in
+        [Yy]* )
+            AUTO_YES="false"
+            ;;
+        [Nn]* )
+            print_warning "Installation abgebrochen"
+            exit 0
+            ;;
+        [Ff]* | full | FULL )
+            AUTO_YES="true"
+            print_success "Full-Installation aktiviert - alle Pakete werden automatisch installiert"
+            sleep 1
+            ;;
+        * )
+            print_error "Ungültige Eingabe. Bitte 'y', 'n' oder 'full' eingeben."
+            exit 1
+            ;;
+    esac
     
     # Run installation steps
     check_root
     check_dietpi
     update_system
+    optimize_dietpi
     install_python
     install_x11
     install_pyqt5

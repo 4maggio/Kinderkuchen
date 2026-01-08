@@ -49,25 +49,42 @@ cd Kinderkuchen-main
 **Hinweis:** 7zip wird nur zum Entpacken des Downloads benötigt (~500KB). Das install.sh Skript installiert es nicht, um Speicher zu sparen.
 
 2. **Installations-Skript ausführen:**
+
+**Interaktive Installation (empfohlen):**
 ```bash
 sudo bash install.sh
+# Wähle 'y' und entscheide für jedes Paket einzeln
 ```
 
-Das Skript wird interaktiv folgendes installieren und konfigurieren:
+**Vollautomatische Installation (keine Rückfragen):**
+```bash
+sudo bash install.sh
+# Wähle 'full' - installiert ALLE Pakete automatisch
+```
+
+Das Skript wird folgendes installieren und konfigurieren:
 - ✅ Python 3 + venv
 - ✅ Minimales X11 (nur für Chromium)
 - ✅ Openbox Window Manager
 - ✅ PyQt5 (als System-Paket oder via pip)
 - ✅ Chromium Browser (für Kiosk-Modus)
-- ✅ RealVNC Server (optional)
+- ✅ RealVNC Server (optional in interaktiv, immer in full)
+- ✅ On-Screen Keyboard (optional in interaktiv, immer in full)
+- ✅ **7" Touchscreen Treiber** (dtoverlay=rpi-ft5406 für offiziellen Display)
+- ✅ **DietPi Optimierungen** (Hardware & Services):
+  - Deaktiviert unnötige Services (Bluetooth, Avahi, Cron, etc.)
+  - Optional: HDMI deaktivieren (spart ~5-10MB RAM)
+  - Optional: WiFi deaktivieren bei Ethernet (spart ~10-15MB RAM)
+  - **Audio bleibt aktiviert** (wird für Apps benötigt)
+  - **Gesamt-Einsparung: bis zu ~55MB RAM**
 - ✅ Auto-Boot Konfiguration
-- ✅ Display-Rotation (falls nötig)
+- ✅ Display-Rotation (0°/90°/180°/270°)
 
 **Geschätzte Installationszeit:** 10-30 Minuten (abhängig von Internet-Geschwindigkeit)
 
 **Geschätzter Speicherbedarf:**
-- Minimal (ohne VNC): ~350MB
-- Mit VNC: ~400MB
+- Minimal (ohne VNC/Keyboard): ~100MB
+- Empfohlen (mit Chromium/VNC/Keyboard): ~450MB
 
 3. **Neu starten:**
 ```bash
@@ -285,7 +302,12 @@ sudo journalctl -u kidlauncher -f
 
 - **Projekt:** https://github.com/4maggio/Kinderkuchen
 - **Issues:** https://github.com/4maggio/Kinderkuchen/issues
-- **Dokumentation:** Siehe `Raspi_Concept` im Repository
+- **Dokumentation:**
+  - [README.md](README.md) - Projektübersicht und Schnellstart
+  - [INSTALL.md](INSTALL.md) - Diese Installationsanleitung
+  - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Fehlerbehebung
+  - [QUICKFIX.md](QUICKFIX.md) - Schnelle Lösungen für häufige Probleme
+  - [CONTRIBUTING.md](CONTRIBUTING.md) - Wie du zum Projekt beitragen kannst
 
 ---
 

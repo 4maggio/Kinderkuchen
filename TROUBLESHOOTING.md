@@ -1,5 +1,51 @@
 # Troubleshooting Guide
 
+## 🚨 Kritische Probleme nach Installation
+
+### ⚫ Schwarzer Bildschirm nach Reboot / Display zeigt nichts an
+
+**Symptome:**
+- Linux Boot-Output ist sichtbar
+- Screen wird weiß/faded aus
+- Dann komplett schwarz
+
+**Ursache:** X11 startet, aber die App wird nicht gelauncht.
+
+**Schnellste Lösung (via SSH):**
+```bash
+# Via SSH einloggen
+ssh dietpi@raspberrypi.local  # oder deine Pi IP-Adresse
+
+# .xinitrc prüfen
+cat ~/.xinitrc
+
+# Falls die App nicht am Ende gestartet wird:
+nano ~/.xinitrc
+```
+
+Stelle sicher, dass **am Ende** folgende Zeilen stehen:
+```bash
+# Launch the Kid Launcher app
+cd /opt/kidlauncher
+/opt/kidlauncher/venv/bin/python /opt/kidlauncher/apps/week_calendar/main.py
+```
+
+Speichern (Ctrl+O, Enter, Ctrl+X) und rebooten:
+```bash
+chmod +x ~/.xinitrc
+sudo reboot
+```
+
+**Alternative: Temporär manuell starten**
+```bash
+ssh dietpi@raspberrypi.local
+startx
+```
+
+**Detaillierte Fixes:** Siehe [QUICKFIX.md](QUICKFIX.md)
+
+---
+
 ## Häufige Probleme und Lösungen
 
 ### Installation schlägt fehl
@@ -146,7 +192,35 @@ DISPLAY=:0 xinput_calibrator
 ### Performance-Probleme
 
 #### Problem: App ist sehr langsam (Pi 2)
-**Optimierungen:**
+**Optimierungen:* Server nicht konfiguriert nach Installation
+**Symptom:** VNC funktioniert nicht, obwohl installiert
+
+**Lösung:**
+```bash
+# VNC Passwort setzen
+sudo vncpasswd -service
+# Passwort eingeben (mind. 6 Zeichen)
+
+# Service aktivieren und starten
+sudo systemctl enable vncserver-x11-serviced.service
+sudo systemctl start vncserver-x11-serviced.service
+
+# Status prüfen
+sudo systemctl status vncserver-x11-serviced.service
+```
+
+**VNC Verbindung testen:**
+```bash
+# IP-Adresse herausfinden
+hostname -I
+
+# Port prüfen (sollte 5900 sein)
+sudo netstat -tlnp | grep 5900
+```
+
+**Client verbinden:** Mit VNC Viewer zu `<IP-ADRESSE>:5900` verbinden.
+
+#### Problem: VNC*
 
 1. **GPU-Speicher erhöhen:**
    ```bash
