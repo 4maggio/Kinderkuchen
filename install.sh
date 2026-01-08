@@ -269,10 +269,17 @@ setup_venv() {
     
     cd "$INSTALL_DIR"
     
+    # Determine if we should use system-site-packages (for system PyQt5)
+    local venv_args=""
+    if [ "$PYQT_SYSTEM" = "1" ]; then
+        venv_args="--system-site-packages"
+        print_success "venv wird mit Zugriff auf System-Pakete erstellt (für PyQt5)..."
+    fi
+    
     # Create venv
     if [ ! -d "$VENV_DIR" ]; then
         print_success "Erstelle Virtual Environment..."
-        sudo -u $SERVICE_USER python3 -m venv "$VENV_DIR"
+        sudo -u $SERVICE_USER python3 -m venv $venv_args "$VENV_DIR"
         print_success "venv erstellt"
     else
         print_success "venv existiert bereits"
@@ -284,7 +291,18 @@ setup_venv() {
     # Install Python packages
     if [ -f "$INSTALL_DIR/requirements.txt" ]; then
         print_success "Installiere Python-Pakete..."
-        sudo -u $SERVICE_USER "$VENV_DIR/bin/pip" install -r "$INSTALL_DIR/requirements.txt"
+        
+        if [ "$PYQT_SYSTEM" = "1" ]; then
+            # Skip PyQt5 from requirements.txt if using system package
+            print_success "PyQt5 wird übersprungen (System-Paket wird verwendet)..."
+            grep -v "^PyQt5" "$INSTALL_DIR/requirements.txt" > "$INSTALL_DIR/requirements_temp.txt"
+            sudo -u $SERVICE_USER "$VENV_DIR/bin/pip" install -r "$INSTALL_DIR/requirements_temp.txt"
+            rm "$INSTALL_DIR/requirements_temp.txt"
+        else
+            # Install all packages including PyQt5
+            sudo -u $SERVICE_USER "$VENV_DIR/bin/pip" install -r "$INSTALL_DIR/requirements.txt"
+        fi
+        
         print_success "Python-Pakete installiert"
     else
         print_warning "requirements.txt nicht gefunden - übersprungen"
@@ -519,7 +537,8 @@ EOF
     echo "das System für automatischen Start beim Booten."
     echo ""
     echo "Speicherbedarf:"
-    echo "  - Minimal (ohne Chromium/VNC): ~120MB"
+    install_pyqt5
+    PYQT_SYSTEM=$?  # Store return value: 0 = system package, 1 = piphne Chromium/VNC): ~120MB"
     echo "  - Empfohlen (mit Chromium/VNC/Keyboard): ~580MB"
     echo "  - Jedes Paket kann einzeln aktiviert/deaktiviert werden"
     echo ""
