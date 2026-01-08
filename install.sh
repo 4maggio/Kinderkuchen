@@ -114,7 +114,7 @@ install_x11() {
     fi
     
     # Minimal X11 packages (absolute minimum)
-    apt-get install -y \
+    apt-get install -y --no-install-recommends \
         xserver-xorg-core \
         xserver-xorg-video-fbdev \
         xinit \
@@ -132,14 +132,14 @@ install_python() {
     print_header "Python 3 Installation"
     
     # Install Python 3 and venv (minimal)
-    apt-get install -y \
+    apt-get install -y --no-install-recommends \
         python3 \
         python3-venv \
         python3-dev
     
     # Git is optional - only install if user wants updates via git
     if ask_yes_no "Git installieren? (für Updates via git pull)" "n"; then
-        apt-get install -y git
+        apt-get install -y --no-install-recommends git
         print_success "Git installiert"
     else
         print_warning "Git übersprungen - Updates nur manuell möglich"
@@ -157,7 +157,7 @@ install_pyqt5() {
     
     if ask_yes_no "System-Paket verwenden? (empfohlen)" "y"; then
         # Only install base PyQt5 package (includes QtWidgets)
-        apt-get install -y python3-pyqt5
+        apt-get install -y --no-install-recommends python3-pyqt5
         
         print_success "PyQt5 als System-Paket installiert"
         return 0
@@ -182,7 +182,7 @@ install_chromium() {
         return
     fi
     
-    apt-get install -y chromium
+    apt-get install -y --no-install-recommends chromium
     
     print_success "Chromium installiert"
 }
@@ -204,7 +204,7 @@ install_vnc() {
     
     # Check if RealVNC is available in repositories
     if apt-cache show realvnc-vnc-server &>/dev/null; then
-        apt-get install -y realvnc-vnc-server
+        apt-get install -y --no-install-recommends realvnc-vnc-server
         print_success "RealVNC Server installiert"
     else
         print_warning "RealVNC nicht in Repositories gefunden"
@@ -228,7 +228,7 @@ install_onscreen_keyboard() {
         return
     fi
     
-    apt-get install -y matchbox-keyboard
+    apt-get install -y --no-install-recommends matchbox-keyboard
     
     print_success "On-Screen Keyboard installiert"
 }
@@ -536,10 +536,9 @@ EOF
     echo "Dieses Skript installiert alle Abhängigkeiten und konfiguriert"
     echo "das System für automatischen Start beim Booten."
     echo ""
-    echo "Speicherbedarf:"
-    install_pyqt5
-    PYQT_SYSTEM=$?  # Store return value: 0 = system package, 1 = piphne Chromium/VNC): ~120MB"
-    echo "  - Empfohlen (mit Chromium/VNC/Keyboard): ~580MB"
+    echo "Speicherbedarf (mit --no-install-recommends optimiert):"
+    echo "  - Minimal (ohne Chromium/VNC): ~100MB"
+    echo "  - Empfohlen (mit Chromium/VNC/Keyboard): ~450MB"
     echo "  - Jedes Paket kann einzeln aktiviert/deaktiviert werden"
     echo ""
     echo "Geschätzte Installationszeit: 10-30 Minuten"
@@ -556,7 +555,8 @@ EOF
     update_system
     install_python
     install_x11
-    local pyqt_system=$?
+    install_pyqt5
+    PYQT_SYSTEM=$?  # Store return value: 0 = system package, 1 = pip
     install_chromium
     install_vnc
     install_onscreen_keyboard
