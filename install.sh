@@ -182,7 +182,7 @@ install_chromium() {
         return
     fi
     
-    apt-get install -y chromium-browser
+    apt-get install -y chromium
     
     print_success "Chromium installiert"
 }

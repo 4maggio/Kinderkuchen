@@ -179,10 +179,57 @@ class DashboardView(QWidget):
             if self.settings_path.exists():
                 with open(self.settings_path, 'r') as f:
                     settings = json.load(f)
-                    return settings.get("launcher", default_config)
+                    config = settings.get("launcher", default_config)
+                    
+                    # Dynamically add Anton app if enabled
+                    anton_settings = settings.get("anton", {})
+                    if anton_settings.get("enabled", True):
+                        anton_app = self._create_anton_app_config(anton_settings)
+                        # Check if Anton is already in apps list
+                        if not any(app.get("id") == "anton" for app in config.get("apps", [])):
+                            config.setdefault("apps", []).insert(0, anton_app)
+                    else:
+                        # Remove Anton if disabled
+                        config["apps"] = [app for app in config.get("apps", []) if app.get("id") != "anton"]
+                    
+                    return config
         except Exception as e:
             print(f"Error loading launcher config: {e}")
         return default_config
+    
+    def _create_anton_app_config(self, anton_settings: dict) -> dict:
+        """Create Anton app configuration from settings.
+        
+        Args:
+            anton_settings: Anton settings from config
+            
+        Returns:
+            App config dict for Anton
+        """
+        auto_login = anton_settings.get("auto_login", True)
+        login_method = anton_settings.get("login_method", "code")
+        
+        # Build URL with login code if auto-login enabled and method is code
+        url = "https://anton.app"
+        if auto_login and login_method == "code":
+            login_code = anton_settings.get("login_code", "").strip()
+            if login_code:
+                url = f"https://anton.app/code/{login_code}"
+        # For email/phone, just open Anton - user needs to login manually
+        
+        # Build chromium command
+        command = f'chromium --kiosk --noerrdialogs --disable-infobars --no-first-run "{url}"'
+        
+        return {
+            "id": "anton",
+            "type": "website",
+            "name": "Anton",
+            "subtitle": "Lernen",
+            "icon": "🎓",
+            "command": command,
+            "url": url,
+            "kiosk": True
+        }
     
     def _init_ui(self):
         """Initialize the user interface."""

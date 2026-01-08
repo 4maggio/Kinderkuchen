@@ -177,7 +177,15 @@ class SettingsDialog(QWidget):
             "launcher": {
                 "grid_rows": 2,
                 "grid_columns": 2,
-                "apps": []
+                "apps": [
+                    {
+                        "type": "website",
+                        "name": "Anton",
+                        "url": "https://anton.app",
+                        "icon": "🎓",
+                        "kiosk": True
+                    }
+                ]
             },
             "parental": {
                 "pin_code": "1234",
@@ -191,6 +199,14 @@ class SettingsDialog(QWidget):
             "onscreen_keyboard": {
                 "enabled": True,
                 "auto_show": False
+            },
+            "anton": {
+                "enabled": True,
+                "login_method": "code",
+                "login_code": "",
+                "email": "",
+                "phone": "",
+                "auto_login": True
             }
         }
     
@@ -375,6 +391,7 @@ class SettingsDialog(QWidget):
         tabs.addTab(self._create_screentime_tab(), "⏱ " + t('screentime.group'))
         tabs.addTab(self._create_daily_icons_tab(), "🎯 Tages-Icons")
         tabs.addTab(self._create_apps_tab(), "🧩 " + t('settings.tabs.apps'))
+        tabs.addTab(self._create_anton_tab(), "🎓 Anton")
         tabs.addTab(self._create_appearance_tab(), "🎨 " + t('settings.appearance_tab.title'))
         tabs.addTab(self._create_sync_tab(), t('settings.tabs.sync'))
         tabs.addTab(self._create_security_tab(), t('settings.tabs.security'))
@@ -1249,6 +1266,171 @@ class SettingsDialog(QWidget):
         layout.addStretch()
         return widget
     
+    def _create_anton_tab(self) -> QWidget:
+        """Create Anton.app configuration tab.
+        
+        Returns:
+            Anton settings widget
+        """
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setSpacing(16)
+        
+        # Info
+        info_label = QLabel(
+            "🎓 <b>Anton.app</b> ist eine Lern-App für Kinder.<br>"
+            "Hier können Anmeldeinformationen gespeichert werden, damit das Kind automatisch angemeldet wird."
+        )
+        info_label.setWordWrap(True)
+        info_label.setStyleSheet(f"color: {self.theme_colors.text_secondary}; padding: 10px;")
+        layout.addWidget(info_label)
+        
+        # Anton Settings Group
+        anton_group = QGroupBox("⚙️ Anton Einstellungen")
+        anton_form = QFormLayout()
+        
+        self.anton_enabled = QCheckBox("Anton in Launcher anzeigen")
+        self.anton_enabled.setChecked(self.settings.get("anton", {}).get("enabled", True))
+        anton_form.addRow("", self.anton_enabled)
+        
+        self.anton_auto_login = QCheckBox("Automatische Anmeldung aktivieren")
+        self.anton_auto_login.setChecked(self.settings.get("anton", {}).get("auto_login", True))
+        self.anton_auto_login.toggled.connect(self._on_anton_auto_login_changed)
+        anton_form.addRow("", self.anton_auto_login)
+        
+        # Login Method
+        self.anton_login_method = QComboBox()
+        self.anton_login_method.addItem("🔑 Login-Code", "code")
+        self.anton_login_method.addItem("📧 E-Mail", "email")
+        self.anton_login_method.addItem("📱 Telefonnummer", "phone")
+        current_method = self.settings.get("anton", {}).get("login_method", "code")
+        index = self.anton_login_method.findData(current_method)
+        if index >= 0:
+            self.anton_login_method.setCurrentIndex(index)
+        self.anton_login_method.currentIndexChanged.connect(self._on_anton_login_method_changed)
+        anton_form.addRow("Login-Methode:", self.anton_login_method)
+        
+        # Login Credentials
+        self.anton_login_code = QLineEdit()
+        self.anton_login_code.setPlaceholderText("z.B. ABC-123")
+        self.anton_login_code.setMaxLength(20)
+        self.anton_login_code.setText(self.settings.get("anton", {}).get("login_code", ""))
+        anton_form.addRow("🔑 Login-Code:", self.anton_login_code)
+        
+        self.anton_email = QLineEdit()
+        self.anton_email.setPlaceholderText("kind@example.com")
+        self.anton_email.setText(self.settings.get("anton", {}).get("email", ""))
+        anton_form.addRow("📧 E-Mail:", self.anton_email)
+        
+        self.anton_phone = QLineEdit()
+        self.anton_phone.setPlaceholderText("+49 123 456789")
+        self.anton_phone.setText(self.settings.get("anton", {}).get("phone", ""))
+        anton_form.addRow("📱 Telefon:", self.anton_phone)
+        
+        help_text = QLabel(
+            "ℹ️ <b>Login-Code:</b> In Anton unter 'Profil' → 'Anmeldecode' zu finden.<br>"
+            "<b>E-Mail/Telefon:</b> Die Anmeldedaten werden gespeichert, aber müssen manuell eingegeben werden."
+        )
+        help_text.setWordWrap(True)
+        help_text.setStyleSheet(f"color: {self.theme_colors.text_secondary}; font-size: 11px;")
+        anton_form.addRow("", help_text)
+        
+        # Test Button
+        test_layout = QHBoxLayout()
+        test_btn = QPushButton("🚀 Anton öffnen (Test)")
+        test_btn.clicked.connect(self._test_anton_launch)
+        test_layout.addWidget(test_btn)
+        test_layout.addStretch()
+        anton_form.addRow("", test_layout)
+        
+        anton_group.setLayout(anton_form)
+        layout.addWidget(anton_group)
+        
+        self._on_anton_auto_login_changed(self.anton_auto_login.isChecked())
+        self._on_anton_login_method_changed()
+        
+        layout.addStretch()
+        return widget
+    
+    def _on_anton_auto_login_changed(self, enabled: bool):
+        """Enable/disable login code based on auto-login setting."""
+        self.anton_login_method.setEnabled(enabled)
+        self.anton_login_code.setEnabled(enabled)
+        self.anton_email.setEnabled(enabled)
+        self.anton_phone.setEnabled(enabled)
+        if enabled:
+            self._on_anton_login_method_changed()
+    
+    def _on_anton_login_method_changed(self):
+        """Show/hide login fields based on selected method."""
+        if not hasattr(self, 'anton_login_method'):
+            return
+        
+        method = self.anton_login_method.currentData()
+        auto_login = self.anton_auto_login.isChecked()
+        
+        # Show only the relevant field
+        self.anton_login_code.setVisible(method == "code" and auto_login)
+        self.anton_email.setVisible(method == "email" and auto_login)
+        self.anton_phone.setVisible(method == "phone" and auto_login)
+    
+    def _test_anton_launch(self):
+        """Test launching Anton with current settings."""
+        import subprocess
+        
+        auto_login = self.anton_auto_login.isChecked()
+        login_method = self.anton_login_method.currentData()
+        
+        # Build URL based on login method
+        url = "https://anton.app"
+        info_text = "Anton wurde geöffnet.\n\n"
+        
+        if auto_login and login_method == "code":
+            login_code = self.anton_login_code.text().strip()
+            if login_code:
+                url = f"https://anton.app/code/{login_code}"
+                info_text += f"Login-Code: {login_code}\n"
+            else:
+                info_text += "Hinweis: Kein Login-Code eingegeben.\n"
+        elif auto_login and login_method == "email":
+            email = self.anton_email.text().strip()
+            if email:
+                info_text += f"E-Mail gespeichert: {email}\n"
+                info_text += "Bitte manuell in Anton anmelden.\n"
+            else:
+                info_text += "Hinweis: Keine E-Mail eingegeben.\n"
+        elif auto_login and login_method == "phone":
+            phone = self.anton_phone.text().strip()
+            if phone:
+                info_text += f"Telefon gespeichert: {phone}\n"
+                info_text += "Bitte manuell in Anton anmelden.\n"
+            else:
+                info_text += "Hinweis: Keine Telefonnummer eingegeben.\n"
+        
+        info_text += f"\nURL: {url}\n\nDrücke Alt+F4 oder ESC zum Beenden."
+        
+        try:
+            # Launch Chromium in kiosk mode
+            subprocess.Popen([
+                "chromium",
+                "--kiosk",
+                "--noerrdialogs",
+                "--disable-infobars",
+                "--no-first-run",
+                url
+            ])
+            QMessageBox.information(self, "Anton", info_text)
+        except FileNotFoundError:
+            QMessageBox.warning(
+                self, "Anton",
+                "Chromium ist nicht installiert.\n\nInstallation: sudo apt-get install chromium"
+            )
+        except Exception as e:
+            QMessageBox.warning(
+                self, "Anton",
+                f"Fehler beim Starten von Anton:\n{str(e)}"
+            )
+    
     def _create_appearance_tab(self) -> QWidget:
         """Create appearance settings tab.
         
@@ -1611,6 +1793,16 @@ class SettingsDialog(QWidget):
             self.settings["onscreen_keyboard"] = {}
         self.settings["onscreen_keyboard"]["enabled"] = self.keyboard_enabled.isChecked()
         self.settings["onscreen_keyboard"]["auto_show"] = self.keyboard_auto_show.isChecked()
+        
+        # Update Anton settings
+        if "anton" not in self.settings:
+            self.settings["anton"] = {}
+        self.settings["anton"]["enabled"] = self.anton_enabled.isChecked()
+        self.settings["anton"]["auto_login"] = self.anton_auto_login.isChecked()
+        self.settings["anton"]["login_method"] = self.anton_login_method.currentData()
+        self.settings["anton"]["login_code"] = self.anton_login_code.text().strip()
+        self.settings["anton"]["email"] = self.anton_email.text().strip()
+        self.settings["anton"]["phone"] = self.anton_phone.text().strip()
         
         # Update screentime settings
         if "screentime" not in self.settings:
