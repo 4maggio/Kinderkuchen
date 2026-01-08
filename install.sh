@@ -42,6 +42,46 @@ print_error() {
     echo -e "${RED}✗ $1${NC}"
 }
 
+select_service_user() {
+    print_header "Benutzerkonto auswählen"
+
+    local selected_user="$SERVICE_USER"
+    if [ "$AUTO_YES" != "true" ]; then
+        read -p "Launcher unter welchem Benutzer starten? [$SERVICE_USER]: " input_user
+        input_user=${input_user:-$SERVICE_USER}
+        selected_user="$input_user"
+    else
+        echo "Auto-Installation aktiv - verwende Benutzer '$SERVICE_USER'"
+    fi
+
+    if ! id -u "$selected_user" >/dev/null 2>&1; then
+        print_warning "Benutzer '$selected_user' existiert nicht."
+        if ask_yes_no "Benutzer '$selected_user' jetzt anlegen?" "y"; then
+            adduser --disabled-password --gecos "" "$selected_user"
+            print_success "Benutzer '$selected_user' angelegt"
+        else
+            print_error "Benutzer wird benötigt - Installation abgebrochen."
+            exit 1
+        fi
+    fi
+
+    SERVICE_USER="$selected_user"
+    print_success "Verwende Benutzer '$SERVICE_USER'"
+    ensure_service_user_groups
+}
+
+ensure_service_user_groups() {
+    local groups=(tty video input)
+    for group in "${groups[@]}"; do
+        if id -nG "$SERVICE_USER" | grep -qw "$group"; then
+            echo "  ✓ $SERVICE_USER ist bereits in Gruppe $group"
+        else
+            usermod -aG "$group" "$SERVICE_USER"
+            print_success "$SERVICE_USER zu Gruppe $group hinzugefügt"
+        fi
+    done
+}
+
 ask_yes_no() {
     local prompt="$1"
     local default="${2:-y}"
@@ -518,6 +558,53 @@ configure_display() {
 }
 
 ###############################################################################
+# Configure Audio Output
+###############################################################################
+
+configure_audio() {
+    print_header "Audio Konfiguration"
+
+    if ! ask_yes_no "Onboard-Klinke als Standardausgabe setzen?" "y"; then
+        print_warning "Audio-Konfiguration übersprungen"
+        return
+    fi
+
+    CONFIG_FILE="/boot/config.txt"
+    if [ -f "$CONFIG_FILE" ]; then
+        sed -i '/^dtparam=audio=/d' "$CONFIG_FILE"
+        echo "dtparam=audio=on" >> "$CONFIG_FILE"
+        print_success "Analog-Audio im config.txt aktiviert"
+    else
+        print_warning "$CONFIG_FILE nicht gefunden - Überspringe dtparam"
+    fi
+
+    # Ensure ALSA tools are present for mixer configuration
+    if ! command -v amixer >/dev/null 2>&1; then
+        safe_apt_install alsa-utils || print_warning "alsa-utils konnte nicht installiert werden"
+    fi
+
+    if command -v amixer >/dev/null 2>&1; then
+        amixer cset numid=3 1 >/dev/null 2>&1 || print_warning "Konnte Audio-Ausgabe nicht auf Kopfhörer setzen"
+        amixer set PCM 90% >/dev/null 2>&1 || true
+    fi
+
+    cat > /etc/asound.conf <<'EOF'
+pcm.!default {
+    type hw
+    card 0
+    device 0
+}
+
+ctl.!default {
+    type hw
+    card 0
+}
+EOF
+
+    print_success "ALSA-Standardausgabe auf Headphone Port gesetzt"
+}
+
+###############################################################################
 # Configure Auto-Boot
 ###############################################################################
 
@@ -529,6 +616,8 @@ configure_autoboot() {
         print_warning "Auto-Boot übersprungen"
         return
     fi
+
+    ensure_service_user_groups
     
     # Create systemd service (as backup/monitoring - primary launch via .xinitrc)
     cat > /etc/systemd/system/kidlauncher.service <<EOF
@@ -577,13 +666,12 @@ EOF
     print_success ".xinitrc erstellt"
     
     # Configure auto-login with X11
+    mkdir -p /etc/systemd/system/getty@tty1.service.d/
     cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf <<EOF
 [Service]
 ExecStart=
 ExecStart=-/sbin/agetty --autologin $SERVICE_USER --noclear %I \$TERM
 EOF
-    
-    mkdir -p /etc/systemd/system/getty@tty1.service.d/
     
     # Add startx to .bash_profile
     if ! grep -q "startx" /home/$SERVICE_USER/.bash_profile 2>/dev/null; then
@@ -744,6 +832,7 @@ EOF
     # Run installation steps
     check_root
     check_dietpi
+    select_service_user
     update_system
     optimize_dietpi
     install_python
@@ -756,6 +845,7 @@ EOF
     setup_project
     setup_venv
     configure_display
+    configure_audio
     configure_autoboot
     create_launch_script
     final_setup

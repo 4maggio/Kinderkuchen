@@ -1,0 +1,185 @@
+Ziel
+
+Ein Hardcover-Buch, das von außen wie ein normales Buch aussieht, innen aber:
+
+einen 7" Raspberry-Pi-Touchscreen (800×600@60) zeigt
+
+einen Raspberry Pi 2 aufnimmt
+
+optional Akku/Powerbank
+
+ausschließlich mit Papier/Pappe und Leim gebaut ist
+(keine Holz-, Metall- oder 3D-Druckteile; Schrauben nur dort, wo sie zur Hardware gehören)
+
+Grundprinzip des Buch-Cases
+1. Buch vorbereiten
+
+Dickes Hardcover-Buch (Lexikon o. Ä.)
+
+Seiten geschlossen an den Außenkanten (oben / unten / außen) mit Ponal verleimen
+
+Buchrücken nicht verleimen
+
+Trocknen unter Druck
+
+Ergebnis:
+Ein stabiler, harter Buchblock außen – innen weiterhin ausschneidbar.
+
+2. Innenraum aushöhlen
+
+Rechteckiger Ausschnitt für das Display in die vorderen Seiten
+
+Rand stehen lassen (ca. 15–20 mm)
+
+In Ebenen ausschneiden:
+
+obere Ebene: Display
+
+dahinter: Pi + Technik
+
+Nach dem Schneiden die Schnittkanten innen nochmals mit verdünntem Leim härten
+
+Display-Befestigung (zentraler Punkt)
+Ausgangslage
+
+Offizieller 7" Raspberry-Pi-Touchscreen
+
+Rückseite mit:
+
+vier Befestigungsösen (Metalleinsätze)
+
+Adapterplatine
+
+Pi kann direkt am Display verschraubt werden (Standard-Montage)
+
+Geplante Lösung: Papp-Rahmen + Schraubblöcke
+Aufbau (von vorne nach hinten):
+
+Passepartout-Seite
+
+Buchseite mit Display-Ausschnitt
+
+verdeckt Displaykante
+
+keine tragende Funktion
+
+Tragrahmen aus Pappe
+
+mehrlagige Graupappe
+
+Display liegt von vorne sauber an
+
+verteilt Kräfte auf den Buchblock
+
+Schraubebene
+
+an den vier Display-Ösen sitzen massive Papp-Blöcke
+
+gebaut aus 6–10 verleimten Pappschichten
+
+nach dem Trocknen sehr hart
+
+Schrauben schneiden sich direkt in die Pappe
+
+Technikraum
+
+Luftspalt
+
+Kabel
+
+Pi
+
+Wichtig:
+Das Display wird nicht geklebt, sondern:
+
+durch den Rahmen gehalten
+
+und über die vorhandenen Schraubpunkte fixiert
+
+Raspberry-Pi-Befestigung
+
+Pi sitzt hinter dem Display, so wie vorgesehen
+
+Verschraubung:
+
+Pi → Abstandshalter → Display-Ösen → Papp-Schraubblöcke
+
+Keine separate Pi-Halterung nötig
+
+Alternativ/ergänzend:
+
+Pi liegt zusätzlich in einer Papp-Wanne (seitliche Führung)
+
+Rückseite / Service-Zugang
+
+Rückdeckel oder letzte Seiten nicht verleimt
+
+bilden eine Service-Klappe
+
+Zugang zu:
+
+Pi
+
+Schrauben
+
+SD-Karte
+
+Akku
+
+Verschluss
+
+Starke Neodym-Magnete hinten
+
+schwächere Magnete oder nur Buchmechanik vorne
+
+Magnete in Pappe eingelassen und verleimt
+
+Material-Philosophie
+
+Verwendet werden nur:
+
+Buchseiten
+
+Graupappe / dicke Pappe
+
+Papier
+
+Holzleim (Ponal)
+
+vorhandene Schrauben der Hardware
+
+Nicht verwendet:
+
+Holz
+
+Metallwinkel
+
+3D-Druck
+
+zusätzliche Gehäuse
+
+Mechanische & thermische Leitlinien
+
+Keine Spannung auf dem Displayglas
+
+Schrauben nicht überdrehen
+
+Schraublöcher in Pappe vorstechen
+
+Luftspalt für Kühlung
+
+Kleine Lüftungslöcher im Buchrücken empfohlen
+
+Akku niemals luftdicht einschließen
+
+Gesamtfazit
+
+Das Konzept ist mechanisch tragfähig
+
+Die vorhandenen Display- und Pi-Montagepunkte sind optimal nutzbar
+
+Mehrlagig verleimte Pappe ist stabil genug für Schraubverbindungen
+
+Der rückseitige Service-Zugang macht das System wartbar
+
+Das Buch bleibt von außen ein „echtes Buch“

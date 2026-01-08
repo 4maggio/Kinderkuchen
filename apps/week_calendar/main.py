@@ -3,6 +3,11 @@
 Provides kid-friendly calendar interface with day/week/month/year views.
 """
 
+BASE_DESIGN_WIDTH = 1280
+BASE_DESIGN_HEIGHT = 800
+DEVICE_NATIVE_WIDTH = 800
+DEVICE_NATIVE_HEIGHT = 480
+
 import copy
 import sys
 from pathlib import Path
@@ -36,7 +41,7 @@ from themes.theme_manager import get_theme_manager, Theme, ThemeColors
 class WeekCalendarApp(QMainWindow):
     """Main calendar application window."""
     
-    def __init__(self, windowed: bool = False):
+    def __init__(self, windowed: bool = False, scale_factor: float = 1.0):
         """Initialize the calendar app.
         
         Args:
@@ -45,6 +50,7 @@ class WeekCalendarApp(QMainWindow):
         super().__init__()
         
         self.windowed = windowed
+        self.scale_factor = max(0.5, min(scale_factor, 1.0))
         self.database = CalendarDatabase()
         self.current_date = date.today()
         
@@ -53,11 +59,13 @@ class WeekCalendarApp(QMainWindow):
         self.current_theme = None
         self.appearance_settings = {}
         self.icon_size_override = 64
+        self.icon_scale_overrides = {}
         
         # Initialize screen time manager
         self.screentime_manager = ScreenTimeManager(self)
         
         self._init_ui()
+        self._apply_display_scaling()
         self._load_and_apply_theme()
         self._populate_dummy_data_if_needed()
         
@@ -101,7 +109,7 @@ class WeekCalendarApp(QMainWindow):
         main_layout.addWidget(self.view_stack)
         
         # Create all views
-        self.dashboard_view = DashboardView(self.database)
+        self.dashboard_view = DashboardView(self.database, scale_factor=self.scale_factor)
         self.day_view = DayView(self.database, self.current_date)
         self.week_view = WeekView(self.database, self.current_date)
         self.month_view = MonthView(self.database, self.current_date)
@@ -128,6 +136,34 @@ class WeekCalendarApp(QMainWindow):
         rotation = int(self.database.get_setting('rotation', '0'))
         if rotation != 0:
             self._apply_rotation(rotation)
+    
+    def _apply_display_scaling(self):
+        """Scale UI components to match the target Pi display."""
+        self.icon_scale_overrides = self._build_icon_scale_overrides()
+        scale = self.scale_factor
+        if abs(scale - 1.0) < 0.01:
+            return
+        app = QApplication.instance()
+        if app:
+            base_font = app.font()
+            point_size = base_font.pointSize() or 12
+            base_font.setPointSize(max(8, int(point_size * scale)))
+            app.setFont(base_font)
+        if hasattr(self, 'nav_bar') and hasattr(self.nav_bar, 'set_scale_factor'):
+            self.nav_bar.set_scale_factor(scale)
+        if hasattr(self, 'dashboard_view') and hasattr(self.dashboard_view, 'set_layout_scale'):
+            self.dashboard_view.set_layout_scale(scale)
+    
+    def _build_icon_scale_overrides(self) -> dict:
+        """Create icon overrides derived from the active scale factor."""
+        scale = self.scale_factor
+        if abs(scale - 1.0) < 0.01:
+            return {}
+        return {
+            "tile_icon_size": max(32, int(64 * scale)),
+            "hero_icon_size": max(64, int(96 * scale)),
+            "calendar_icon_size": max(32, int(48 * scale))
+        }
     
     def _populate_dummy_data_if_needed(self):
         """Populate database with dummy data if empty."""
@@ -300,8 +336,11 @@ class WeekCalendarApp(QMainWindow):
         """Apply theme to the application with optional appearance overrides."""
         if theme is None:
             return
-        effective_overrides = overrides if overrides is not None else self.appearance_settings
-        applied_theme = self._merge_theme_overrides(theme, effective_overrides)
+        override_payload = dict(self.appearance_settings or {})
+        if overrides:
+            override_payload.update(overrides)
+        applied_theme = self._merge_theme_overrides(theme, override_payload)
+        self._scale_theme_fonts(applied_theme)
         self.current_theme = applied_theme
         
         stylesheet = applied_theme.generate_stylesheet()
@@ -311,7 +350,11 @@ class WeekCalendarApp(QMainWindow):
         QApplication.instance().setFont(font)
         
         self._apply_theme_to_components(applied_theme)
-        self._apply_icon_size(effective_overrides)
+        icon_overrides = {}
+        if getattr(self, 'icon_scale_overrides', None):
+            icon_overrides.update(self.icon_scale_overrides)
+        icon_overrides.update(override_payload)
+        self._apply_icon_size(icon_overrides)
         print(f"Applied theme: {applied_theme.display_name}")
 
     def _merge_theme_overrides(self, theme: Theme, overrides: Optional[dict]) -> Theme:
@@ -354,6 +397,26 @@ class WeekCalendarApp(QMainWindow):
             pass  # Keep defaults if scaling fails
         
         return merged_theme
+    
+    def _scale_theme_fonts(self, theme: Theme):
+        """Downscale theme fonts so the UI fits on 800x480 displays."""
+        if not theme or not getattr(theme, 'font', None):
+            return
+        scale = self.scale_factor
+        if abs(scale - 1.0) < 0.01:
+            return
+        font_fields = [
+            "size_small",
+            "size_normal",
+            "size_large",
+            "size_xlarge",
+            "size_heading",
+            "size_title"
+        ]
+        for field in font_fields:
+            value = getattr(theme.font, field, None)
+            if value:
+                setattr(theme.font, field, max(6, int(value * scale)))
     
     def _apply_theme_to_components(self, theme):
         """Propagate theme updates to child widgets."""
@@ -572,19 +635,42 @@ class WeekCalendarApp(QMainWindow):
         self.screentime_manager.controller.credit_time_for_day(minutes, tomorrow)
 
 
+def _determine_scale_factor(app: QApplication, windowed: bool) -> float:
+    """Calculate a scale factor that maps the design to the Pi display."""
+    if windowed:
+        width = DEVICE_NATIVE_WIDTH
+        height = DEVICE_NATIVE_HEIGHT
+    else:
+        screen = app.primaryScreen()
+        if screen:
+            geometry = screen.availableGeometry()
+            width = geometry.width()
+            height = geometry.height()
+        else:
+            width = BASE_DESIGN_WIDTH
+            height = BASE_DESIGN_HEIGHT
+    width_ratio = width / BASE_DESIGN_WIDTH
+    height_ratio = height / BASE_DESIGN_HEIGHT
+    scale = min(width_ratio, height_ratio)
+    return max(0.5, min(1.0, scale))
+
+
 def main():
     """Main entry point."""
-    # Check for command line arguments
     windowed = "--windowed" in sys.argv
+
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+    QApplication.setAttribute(Qt.AA_SynthesizeMouseForUnhandledTouchEvents, True)
+    QApplication.setAttribute(Qt.AA_SynthesizeTouchForUnhandledMouseEvents, True)
     
     app = QApplication(sys.argv)
+    scale_factor = _determine_scale_factor(app, windowed)
     
-    # Set application-wide font
-    font = QFont("Arial", 12)
-    app.setFont(font)
+    base_font_size = max(10, int(12 * scale_factor))
+    app.setFont(QFont("Arial", base_font_size))
     
-    # Create and show main window
-    window = WeekCalendarApp(windowed=windowed)
+    window = WeekCalendarApp(windowed=windowed, scale_factor=scale_factor)
     window.show()
     
     sys.exit(app.exec_())

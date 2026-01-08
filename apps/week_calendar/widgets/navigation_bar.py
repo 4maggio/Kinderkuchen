@@ -28,6 +28,7 @@ class NavigationBar(QWidget):
         
         self.active_view = "week"
         self.theme_colors = ThemeColors()
+        self.scale_factor = 1.0
         self._init_ui()
         self._apply_theme_styles()
     
@@ -78,11 +79,11 @@ class NavigationBar(QWidget):
         layout.addStretch()
         
         # Rotation button
-        rotate_btn = QPushButton("🔄")
-        rotate_btn.setFixedSize(50, 50)
-        rotate_btn.setToolTip("Display rotieren")
-        rotate_btn.clicked.connect(self.rotation_clicked.emit)
-        layout.addWidget(rotate_btn)
+        self.rotate_btn = QPushButton("🔄")
+        self.rotate_btn.setFixedSize(50, 50)
+        self.rotate_btn.setToolTip("Display rotieren")
+        self.rotate_btn.clicked.connect(self.rotation_clicked.emit)
+        layout.addWidget(self.rotate_btn)
         
         # Settings button (will show timer when screentime active)
         self.settings_btn = QPushButton("⚙")
@@ -97,6 +98,10 @@ class NavigationBar(QWidget):
     def _apply_theme_styles(self):
         """Apply stylesheet derived from the current theme colors."""
         c = self.theme_colors
+        font_size = max(12, int(14 * self.scale_factor))
+        padding_v = max(4, int(8 * self.scale_factor))
+        padding_h = max(8, int(16 * self.scale_factor))
+        min_width = max(60, int(80 * self.scale_factor))
         self.setStyleSheet(f"""
             QWidget#NavigationBar {{
                 background-color: {c.background_secondary};
@@ -106,10 +111,10 @@ class NavigationBar(QWidget):
                 color: {c.text_secondary};
                 border: none;
                 border-radius: 8px;
-                padding: 8px 16px;
-                font-size: 14px;
+                padding: {padding_v}px {padding_h}px;
+                font-size: {font_size}px;
                 font-weight: bold;
-                min-width: 80px;
+                min-width: {min_width}px;
             }}
             QWidget#NavigationBar QPushButton:hover {{
                 background-color: {c.background_hover};
@@ -119,6 +124,23 @@ class NavigationBar(QWidget):
                 color: {c.text_primary};
             }}
         """)
+
+    def set_scale_factor(self, scale_factor: float):
+        """Resize navigation controls for smaller displays."""
+        self.scale_factor = max(0.6, min(scale_factor, 1.0))
+        self.setFixedHeight(int(60 * self.scale_factor))
+        side_size = int(50 * self.scale_factor)
+        if hasattr(self, 'rotate_btn'):
+            self.rotate_btn.setFixedSize(side_size, side_size)
+        if hasattr(self, 'settings_btn'):
+            settings_width = int((100 if self.showing_timer else 50) * self.scale_factor)
+            self.settings_btn.setFixedSize(settings_width, side_size)
+        base_view_font = max(12, int(14 * self.scale_factor))
+        for button in getattr(self, 'view_buttons', {}).values():
+            font = button.font()
+            font.setPointSize(base_view_font)
+            button.setFont(font)
+        self._apply_theme_styles()
 
     def apply_theme(self, theme: Optional[Theme]):
         """Update the navigation bar palette based on theme colors."""
@@ -165,13 +187,13 @@ class NavigationBar(QWidget):
         minutes = remaining_seconds // 60
         seconds = remaining_seconds % 60
         self.settings_btn.setText(f"⏱{minutes:02d}:{seconds:02d}")
-        self.settings_btn.setFixedWidth(100)
+        self.settings_btn.setFixedWidth(int(100 * self.scale_factor))
         self.settings_btn.setToolTip("Screen Time Management")
         self.showing_timer = True
     
     def reset_settings_display(self):
         """Reset settings button to show gear icon."""
         self.settings_btn.setText("⚙")
-        self.settings_btn.setFixedWidth(50)
+        self.settings_btn.setFixedWidth(int(50 * self.scale_factor))
         self.settings_btn.setToolTip("Parental Settings")
         self.showing_timer = False

@@ -47,6 +47,7 @@ class AppTile(QFrame):
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignCenter)
         layout.setSpacing(10)
+        self._layout = layout
         
         # Icon
         self.icon_label = QLabel(icon)
@@ -76,6 +77,30 @@ class AppTile(QFrame):
         self.title_label = title_label
         self.subtitle_label = subtitle_label
         self._apply_styles()
+
+    def set_icon_text(self, icon_text: str):
+        """Dynamically change the tile icon label."""
+        if self.icon_label is not None:
+            self.icon_label.setText(icon_text or "")
+
+    def set_title_text(self, title_text: str):
+        """Dynamically change the tile title."""
+        if self.title_label is not None:
+            self.title_label.setText(title_text or "")
+
+    def set_subtitle_text(self, subtitle_text: Optional[str]):
+        """Ensure subtitle label exists and update its contents."""
+        if subtitle_text and not self.subtitle_label:
+            subtitle_label = QLabel(subtitle_text)
+            subtitle_label.setAlignment(Qt.AlignCenter)
+            subtitle_label.setFont(QFont("Comic Sans MS", 13))
+            subtitle_label.setWordWrap(True)
+            self._layout.addWidget(subtitle_label)
+            self.subtitle_label = subtitle_label
+            self._apply_styles()
+        if self.subtitle_label:
+            self.subtitle_label.setText(subtitle_text or "")
+            self.subtitle_label.setVisible(bool(subtitle_text))
     
     def mousePressEvent(self, event):
         """Handle mouse press."""
@@ -131,7 +156,7 @@ class DashboardView(QWidget):
     
     calendar_clicked = pyqtSignal()
     
-    def __init__(self, database, parent=None):
+    def __init__(self, database, parent=None, scale_factor: float = 1.0):
         """Initialize dashboard view.
         
         Args:
@@ -140,6 +165,7 @@ class DashboardView(QWidget):
         """
         super().__init__(parent)
         
+        self.layout_scale = max(0.5, min(scale_factor, 1.0))
         self.database = database
         self.current_date = date.today()
         self.settings_path = Path(__file__).resolve().parent.parent / "config" / "settings.json"
@@ -161,6 +187,7 @@ class DashboardView(QWidget):
         self.icon_font_size = 96  # Larger icons for hero display
         
         self._init_ui()
+        self.set_layout_scale(self.layout_scale)
         self.refresh()
     
     def _load_launcher_config(self) -> dict:
@@ -297,6 +324,27 @@ class DashboardView(QWidget):
     
         self.apply_theme(None)
 
+    def set_layout_scale(self, scale_factor: float):
+        """Resize paddings and artwork to fit small displays."""
+        self.layout_scale = max(0.5, min(scale_factor, 1.0))
+        root_layout = self.layout()
+        if root_layout:
+            margin = int(30 * self.layout_scale)
+            root_layout.setContentsMargins(margin, margin, margin, int(40 * self.layout_scale))
+            root_layout.setSpacing(int(24 * self.layout_scale))
+        if hasattr(self, 'icons_layout'):
+            self.icons_layout.setSpacing(int(24 * self.layout_scale))
+        if hasattr(self, 'grid'):
+            self.grid.setSpacing(int(20 * self.layout_scale))
+        for config in self.artwork_labels.values():
+            base_size = config.get("base_size", config.get("max_size", 190))
+            config["max_size"] = max(60, int(base_size * self.layout_scale))
+            role = config.get("role")
+            asset = config.get("current_asset") or config.get("fallback")
+            if role:
+                self._set_label_artwork(role, asset)
+        self._update_today_icons()
+
     def _build_app_grid(self):
         """Build the app grid dynamically from launcher config."""
         # Clear existing tiles
@@ -406,9 +454,12 @@ class DashboardView(QWidget):
         label.setAlignment(Qt.AlignCenter)
         label.setStyleSheet("background: transparent; border: none;")
         self.artwork_labels[role] = {
+            "role": role,
             "label": label,
             "fallback": fallback_asset,
-            "max_size": max_size
+            "max_size": max_size,
+            "base_size": max_size,
+            "current_asset": fallback_asset
         }
         self._set_label_artwork(role, fallback_asset)
         return label
@@ -433,6 +484,7 @@ class DashboardView(QWidget):
             label.setPixmap(QPixmap())
             label.setText("✨")
             label.setFont(QFont("Comic Sans MS", max(24, int(max_size * 0.35))))
+        config["current_asset"] = candidate
 
     def _resolve_artwork_path(self, relative_or_absolute: Optional[str]) -> Optional[Path]:
         """Resolve artwork path regardless of whether it is absolute or relative."""
@@ -580,8 +632,10 @@ class DashboardView(QWidget):
         for i in range(3):
             if i < len(icons_to_display):
                 self.icon_labels[i].setText(icons_to_display[i])
+                self.icon_labels[i].setVisible(True)
             else:
                 self.icon_labels[i].setText("🏠")
+                self.icon_labels[i].setVisible(True)
     
     def _update_calendar_tile(self):
         """Update calendar tile with today's weather and events."""
@@ -591,10 +645,18 @@ class DashboardView(QWidget):
         
         # Build subtitle with weather and event count
         subtitle_parts = []
-        
+        icon_text = "📅"
         if weather:
             weather_icon = self._get_weather_emoji(weather.get('description', 'clear'))
-            subtitle_parts.append(weather_icon)
+            temps = []
+            if weather.get('temperature_high') is not None and weather.get('temperature_low') is not None:
+                temps.append(f"{int(weather['temperature_high'])}°/{int(weather['temperature_low'])}°")
+            elif weather.get('temperature_high') is not None:
+                temps.append(f"{int(weather['temperature_high'])}°")
+            description = weather.get('description')
+            parts = " ".join(filter(None, [" ".join(temps).strip(), description])).strip()
+            subtitle_parts.append(f"{weather_icon} {parts}".strip())
+            icon_text = weather_icon
         
         if entries:
             event_count = len(entries)
@@ -602,9 +664,10 @@ class DashboardView(QWidget):
         else:
             subtitle_parts.append("Keine Termine")
         
-        # Update tile (need to recreate due to AppTile design)
-        # For now, keep simple - will show static "Heute"
-        # TODO: Make AppTile content dynamic
+        subtitle = " • ".join(filter(None, subtitle_parts))
+        if hasattr(self, 'calendar_tile_widget'):
+            self.calendar_tile_widget.set_icon_text(icon_text)
+            self.calendar_tile_widget.set_subtitle_text(subtitle)
     
     def _get_weather_emoji(self, description: str) -> str:
         """Get weather emoji for description.
